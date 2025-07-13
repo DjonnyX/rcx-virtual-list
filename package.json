@@ -1,6 +1,6 @@
 {
-  "name": "rcx-virtual-list-example",
-  "version": "0.1.0",
+  "name": "rcx-virtual-list",
+  "version": "1.0.0-beta.0",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -11,6 +11,7 @@
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "rcx-virtual-list": "file:projects/rcx-virtual-list/dist",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
@@ -40,5 +41,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "sass": "^1.89.2",
+    "sass-loader": "^16.0.5"
   }
 }
