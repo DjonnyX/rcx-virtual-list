@@ -2,7 +2,7 @@
 
 Maximum performance for extremely large lists.
 
-<img width="1033" height="171" alt="logo-center1" src="https://github.com/user-attachments/assets/32a5f3da-83e2-4801-882b-b198f2d37e7a" />
+![logo](https://github.com/user-attachments/assets/744c9ef7-50dd-46c1-b254-5df6daee7760)
 
 React version 16.X.X - 19.x.x.
 
@@ -417,18 +417,6 @@ Methods
 | scrollTo | (id: [Id](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/types/id.ts), behavior: ScrollBehavior = 'auto') => number | The method scrolls the list to the element with the given id and returns the value of the scrolled area. Behavior accepts the values ​​"auto", "instant" and "smooth". |
 
 <br/>
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
 
 ## License
 
