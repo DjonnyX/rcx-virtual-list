@@ -2,6 +2,10 @@
 
 Maximum performance for extremely large lists.
 
+[Beta version]
+
+Port of [ng-virtual-list](https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list)
+
 <img width="1033" height="171" alt="logo-center1" src="https://github.com/user-attachments/assets/32a5f3da-83e2-4801-882b-b198f2d37e7a" />
 
 React version 16.X.X - 19.x.x.
