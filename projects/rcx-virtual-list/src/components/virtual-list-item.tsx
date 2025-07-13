@@ -60,11 +60,11 @@ export const VirtualListItem = forwardRef<VirtualListItemRefMethods, IVirtualLis
         const el = $elementRef.current;
         if (el) {
             const styles = el.style;
-            if (styles.visibility === VISIBILITY_VISIBLE) {
-                return;
-            }
+            // if (styles.visibility === VISIBILITY_VISIBLE) {
+            //     return;
+            // }
 
-            styles.visibility = VISIBILITY_VISIBLE;
+            // styles.visibility = VISIBILITY_VISIBLE;
         }
     }, [$elementRef]);
 
@@ -72,11 +72,11 @@ export const VirtualListItem = forwardRef<VirtualListItemRefMethods, IVirtualLis
         const el = $elementRef.current;
         if (el) {
             const styles = el.style;
-            if (styles.visibility === VISIBILITY_HIDDEN) {
-                return;
-            }
+            // if (styles.visibility === VISIBILITY_HIDDEN) {
+            //     return;
+            // }
 
-            styles.visibility = VISIBILITY_HIDDEN;
+            // styles.visibility = VISIBILITY_HIDDEN;
             styles.transform = ZEROS_TRANSLATE_3D;
         }
     }, [$elementRef]);

@@ -108,7 +108,7 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
         if (untrackedItems.length) {
             for (let i = 0, l = untrackedItems.length; i < l; i++) {
                 const ref = untrackedItems[i];
-                if (ref) {
+                if (ref && ref.current) {
                     ref.current.hide();
                 }
             }
