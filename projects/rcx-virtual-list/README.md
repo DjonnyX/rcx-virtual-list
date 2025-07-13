@@ -2,7 +2,7 @@
 
 Maximum performance for extremely large lists.
 
-![logo](https://github.com/user-attachments/assets/744c9ef7-50dd-46c1-b254-5df6daee7760)
+<img width="1033" height="171" alt="logo-center1" src="https://github.com/user-attachments/assets/32a5f3da-83e2-4801-882b-b198f2d37e7a" />
 
 React version 16.X.X - 19.x.x.
 
