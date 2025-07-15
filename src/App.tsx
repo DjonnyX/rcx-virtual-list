@@ -6,7 +6,7 @@ import { LOGO } from './const';
 import { VirtualListItemRenderer } from './lib/src/components';
 import { IVirtualListMethods } from './lib/src/virtual-list';
 
-const MAX_ITEMS = 10000;
+const MAX_ITEMS = 100000;
 
 const ITEMS: IVirtualListCollection = [];
 for (let i = 0, l = MAX_ITEMS; i < l; i++) {

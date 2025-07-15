@@ -65,6 +65,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     });
     const _trackBox = useRef(new TrackBox(trackBy));
     const _displayComponents = useRef<Array<React.RefObject<VirtualListItemRefMethods | null>>>([]);
+    const _isScrollingTo = useRef<boolean>(false);
     const [_displayComponentsList, _setDisplayComponentsList] = useState<Array<React.RefObject<VirtualListItemRefMethods | null>>>([]);
     const [_bounds, _setBounds] = useState<ISize | null>(null);
     const [_scrollSize, _setScrollSize] = useState<number>(0);
@@ -168,7 +169,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         clearTimeout(_scrollToRepeatExecutionTimeout.current);
     }, [_scrollToRepeatExecutionTimeout]);
 
-    const _onScrollHandler = useCallback((e?: Event) => {
+    const _onScrollHandler = useRef((e?: Event) => {
         clearScrollToRepeatExecutionTimeout();
 
         const container = $containerRef?.current;
@@ -176,9 +177,9 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             const scrollSize = (_isVertical.current ? container.scrollTop : container.scrollLeft);
             _setScrollSize(scrollSize);
         }
-    }, [$containerRef, _isVertical, clearScrollToRepeatExecutionTimeout]);
+    });
 
-    const _onContainerScrollHandler = useCallback((e: Event) => {
+    const _onContainerScrollHandler = useRef((e: Event) => {
         const containerEl = $containerRef, list = $listRef!.current;
         if (containerEl && containerEl.current && list) {
             const scrollSize = (_isVertical.current ? containerEl.current.scrollTop : containerEl.current.scrollLeft);
@@ -196,9 +197,9 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                 onScroll(event);
             }
         }
-    }, [$containerRef, $listRef, _isVertical, _scrollSize, _trackBox, onScroll]);
+    });
 
-    const _onContainerScrollEndHandler = useCallback((e: Event) => {
+    const _onContainerScrollEndHandler = useRef((e: Event) => {
         const containerEl = $containerRef, list = $listRef!.current;
         if (containerEl && containerEl.current && list) {
             const scrollSize = (_isVertical ? containerEl.current.scrollTop : containerEl.current.scrollLeft);
@@ -215,7 +216,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                 onScrollEnd(event);
             }
         }
-    }, [$containerRef, $listRef, _isVertical, _scrollSize, _trackBox, onScrollEnd]);
+    });
 
     useEffect(() => {
         _onResizeHandler();
@@ -223,10 +224,10 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useEffect(() => {
         if ($containerRef && $containerRef.current) {
-            $containerRef.current.addEventListener(SCROLL, _onContainerScrollHandler);
-            $containerRef.current.addEventListener(SCROLL_END, _onContainerScrollEndHandler);
+            $containerRef.current.addEventListener(SCROLL, _onContainerScrollHandler.current);
+            $containerRef.current.addEventListener(SCROLL_END, _onContainerScrollEndHandler.current);
 
-            $containerRef.current.addEventListener(SCROLL, _onScrollHandler);
+            $containerRef.current.addEventListener(SCROLL, _onScrollHandler.current);
 
             if (_resizeObserver && !_resizeObserver.current) {
                 _resizeObserver.current = new ResizeObserver(_onResizeHandler);
@@ -238,10 +239,10 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
         return () => {
             if ($containerRef && $containerRef.current) {
-                $containerRef.current.removeEventListener(SCROLL, _onContainerScrollHandler);
-                $containerRef.current.removeEventListener(SCROLL_END, _onContainerScrollEndHandler);
+                $containerRef.current.removeEventListener(SCROLL, _onContainerScrollHandler.current);
+                $containerRef.current.removeEventListener(SCROLL_END, _onContainerScrollEndHandler.current);
 
-                $containerRef.current.removeEventListener(SCROLL, _onScrollHandler);
+                $containerRef.current.removeEventListener(SCROLL, _onScrollHandler.current);
 
                 if (_resizeObserver.current) {
                     _resizeObserver.current.disconnect();
@@ -357,7 +358,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
             if (dynamicSize) {
                 if (container && container.current) {
-                    container.current.removeEventListener(SCROLL, _onScrollHandler);
+                    container.current.removeEventListener(SCROLL, _onScrollHandler.current);
                 }
 
                 const { width, height } = _bounds, isVertical = _isVertical.current, delta = _trackBox.current.delta,
@@ -396,7 +397,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                     } else {
                         _setScrollSize(actualScrollSize);
 
-                        container.current?.addEventListener(SCROLL, _onScrollHandler);
+                        container.current?.addEventListener(SCROLL, _onScrollHandler.current);
                     }
                 }
 
