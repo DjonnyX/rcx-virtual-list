@@ -174,7 +174,6 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         const container = $containerRef?.current;
         if (container) {
             const scrollSize = (_isVertical.current ? container.scrollTop : container.scrollLeft);
-
             _setScrollSize(scrollSize);
         }
     }, [$containerRef, _isVertical, clearScrollToRepeatExecutionTimeout]);
@@ -278,6 +277,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             if (el) {
                 _resizeObserver.current?.observe(el);
                 _resizeObserveQueue.current.slice(i, 1);
+
+                _setCacheVersion(v => v - 1);
                 continue;
             }
 
@@ -307,7 +308,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
         const _listContainerRef = $listRef,
             maxLength = displayItems.length,
-            components = _displayComponents.current, result = [...components];
+            components = _displayComponents.current;
 
         while (components.length < maxLength) {
             if (_listContainerRef) {
@@ -438,8 +439,9 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useEffect(() => {
         if (_initialized && _bounds && items) {
-            const { width, height } = _bounds;
-            let actualScrollSize = (_isVertical.current ? $containerRef?.current?.scrollTop ?? 0 : $containerRef?.current?.scrollLeft) ?? 0;
+            const { width, height } = _bounds, delta = _trackBox.current.delta,
+                scrollSize = (_isVertical.current ? $containerRef?.current?.scrollTop ?? 0 : $containerRef?.current?.scrollLeft) ?? 0,
+                actualScrollSize = scrollSize + delta;
             const opts: IUpdateCollectionOptions<IVirtualListItem, IVirtualListCollection> = {
                 bounds: { width, height }, dynamicSize, isVertical, itemSize,
                 itemsOffset, scrollSize: actualScrollSize, snap, enabledBufferOptimization,
@@ -455,13 +457,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             const container = $containerRef;
 
             if (container) {
-                const delta = _trackBox.current.delta;
-                actualScrollSize = actualScrollSize + delta;
-
                 _trackBox.current.clearDelta();
-
-                if (_scrollSize !== actualScrollSize) {
-
+                if (scrollSize !== actualScrollSize) {
                     const params: ScrollToOptions = {
                         [_isVertical.current ? TOP_PROP_NAME : LEFT_PROP_NAME]: actualScrollSize,
                         behavior: BEHAVIOR_INSTANT as ScrollBehavior
