@@ -425,23 +425,28 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
             for (let i = 0, l = collection.length; i < l; i++) {
                 const ii = i + 1, collectionItem = collection[i], id = collectionItem.id;
 
-                let componentSize = 0, componentSizeDelta = 0, itemDisplayMethod: ItemDisplayMethods = ItemDisplayMethods.NOT_CHANGED;
+                let componentSize = typicalItemSize, componentSizeDelta = 0, itemDisplayMethod: ItemDisplayMethods = ItemDisplayMethods.NOT_CHANGED;
                 if (map.has(id)) {
                     const bounds = map.get(id) || { width: typicalItemSize, height: typicalItemSize };
                     componentSize = bounds[sizeProperty];
                     itemDisplayMethod = bounds?.method ?? ItemDisplayMethods.UPDATE;
-                    switch (itemDisplayMethod) {
-                        case ItemDisplayMethods.UPDATE: {
-                            const snapshotBounds = snapshot.get(id);
-                            const componentSnapshotSize = componentSize - (snapshotBounds ? snapshotBounds[sizeProperty] : typicalItemSize);
-                            componentSizeDelta = componentSnapshotSize;
-                            map.set(id, { ...bounds, method: ItemDisplayMethods.NOT_CHANGED });
-                            break;
-                        }
-                        case ItemDisplayMethods.CREATE: {
-                            componentSizeDelta = typicalItemSize;
-                            map.set(id, { ...bounds, method: ItemDisplayMethods.NOT_CHANGED });
-                            break;
+                    if (this._tracker.displayObjectIndexMapById.hasOwnProperty(id)) {
+                        const index = this._tracker.displayObjectIndexMapById[id as number];
+                        if (this._displayComponents[index]?.current) {
+                            switch (itemDisplayMethod) {
+                                case ItemDisplayMethods.UPDATE: {
+                                    const snapshotBounds = snapshot.get(id);
+                                    const componentSnapshotSize = componentSize - (snapshotBounds ? snapshotBounds[sizeProperty] : typicalItemSize);
+                                    componentSizeDelta = componentSnapshotSize;
+                                    map.set(id, { ...bounds, method: ItemDisplayMethods.NOT_CHANGED });
+                                    break;
+                                }
+                                case ItemDisplayMethods.CREATE: {
+                                    componentSizeDelta = typicalItemSize;
+                                    map.set(id, { ...bounds, method: ItemDisplayMethods.NOT_CHANGED });
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -606,8 +611,8 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
                 ? totalLength - itemsFromStartToDisplayEnd : itemsOffset;
             leftItemsWeight = leftItemLength * typicalItemSize;
             rightItemsWeight = rightItemLength * typicalItemSize;
-                leftHiddenItemsWeight = itemsFromStartToScrollEnd * typicalItemSize;
-                totalItemsToDisplayEndWeight = itemsFromStartToDisplayEnd * typicalItemSize;
+            leftHiddenItemsWeight = itemsFromStartToScrollEnd * typicalItemSize;
+            totalItemsToDisplayEndWeight = itemsFromStartToDisplayEnd * typicalItemSize;
             totalSize = totalLength * typicalItemSize;
 
             const k = totalSize !== 0 ? previousTotalSize / totalSize : 0;

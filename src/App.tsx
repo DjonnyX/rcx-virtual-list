@@ -158,7 +158,7 @@ function App() {
   const [maxId] = useState<Id>(() => {
     return verticalItems1.length > 0 ? verticalItems1[verticalItems1.length - 1].id : 0;
   });
-  const [itemId, setItemId] = useState<Id>(minId);
+  const itemId = useRef<Id>(minId);
   const $listContainerRef = useRef<IVirtualListMethods>(null);
 
   const [minDlId] = useState<Id>(() => {
@@ -167,34 +167,34 @@ function App() {
   const [maxDlId] = useState<Id>(() => {
     return verticalItems1.length > 0 ? verticalItems1[verticalItems1.length - 1].id : 0;
   });
-  const [itemDlId, setItemDlId] = useState<Id>(minId);
+  const itemDlId = useRef<Id>(minId);
   const $listContainerRef1 = useRef<IVirtualListMethods>(null);
 
   const onButtonScrollToIdClickHandler = () => {
     const list = $listContainerRef.current;
-    if (list && itemId !== undefined) {
-      list.scrollTo(itemId, 'smooth' as ScrollBehavior);
+    if (list && itemId && itemId.current !== undefined) {
+      list.scrollTo(itemId.current, 'smooth' as ScrollBehavior);
     }
   };
 
   const onButtonScrollDLToIdClickHandler = () => {
     const list = $listContainerRef1.current;
-    if (list && itemDlId !== undefined) {
-      list.scrollTo(itemDlId, 'smooth' as ScrollBehavior);
+    if (list && itemDlId && itemDlId.current !== undefined) {
+      list.scrollTo(itemDlId.current, 'smooth' as ScrollBehavior);
     }
   };
 
   const onInputScrollToIdChangeHandler = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const id: Id | undefined = Number((e.target as any)?.value);
     if (id) {
-      setItemId(id);
+      itemId.current = id;
     }
   }, []);
 
   const onInputScrollToDlIdChangeHandler = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const id: Id | undefined = Number((e.target as any)?.value);
     if (id) {
-      setItemDlId(id);
+      itemDlId.current = id;
     }
   }, []);
 
@@ -241,7 +241,7 @@ function App() {
         <div className="vl-section__container">
           <h2>Scroll to item</h2>
           <div className="scroll-to__controls">
-            <input type={'number'} className="scroll-to__input" value={itemId} required={true} min={minId}
+            <input type={'number'} className="scroll-to__input" required={true} min={minId}
               max={maxId} onChange={onInputScrollToIdChangeHandler} />
             <button className="scroll-to__button" onClick={onButtonScrollToIdClickHandler}>Scroll</button>
           </div>
@@ -270,7 +270,7 @@ function App() {
         <div className="vl-section__container">
           <h2>Virtual list (with dynamic item size)</h2>
           <div className="scroll-to__controls">
-            <input type="number" className="scroll-to__input" value={itemDlId} required={true} min={minDlId}
+            <input type="number" className="scroll-to__input" required={true} min={minDlId}
               max={maxDlId} onChange={onInputScrollToDlIdChangeHandler} />
             <button className="scroll-to__button" onClick={onButtonScrollDLToIdClickHandler}>Scroll</button>
           </div>
