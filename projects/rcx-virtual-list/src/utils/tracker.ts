@@ -73,9 +73,9 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
                         compIndex = this._displayObjectIndexMapById[diId], ref = components[compIndex];
 
                     const compId = ref?.current?.id;
-                    if (ref !== undefined && compId == diId) {
+                    if (ref !== undefined && compId === diId) {
                         const indexByUntrackedItems = untrackedItems.findIndex((ref) => {
-                            return ref.current.id == compId;
+                            return ref.current.id === compId;
                         });
                         if (indexByUntrackedItems > -1) {
                             if (ref.current) {

@@ -12,9 +12,9 @@ import { VirtualListItem } from './components';
 import { IGetItemPositionOptions, IUpdateCollectionOptions, TRACK_BOX_CHANGE_EVENT_NAME } from './utils/trackBox';
 import { IRenderVirtualListCollection } from './models/render-collection.model';
 import { VirtualListItemRefMethods, VirtualListItemRenderer } from './components/virtual-list-item';
+import { useDebounce } from './utils/debounce';
 import { Id } from './types/id';
 import { ISize } from './types/size';
-import { IRect } from './types';
 
 export interface IVirtualListMethods {
     /**
@@ -64,8 +64,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         return __nextId;
     });
     const _trackBox = useRef(new TrackBox(trackBy));
+    const _isStopJumpingScroll = useRef<boolean>(false);
     const _displayComponents = useRef<Array<React.RefObject<VirtualListItemRefMethods | null>>>([]);
-    const _isScrollingTo = useRef<boolean>(false);
     const [_displayComponentsList, _setDisplayComponentsList] = useState<Array<React.RefObject<VirtualListItemRefMethods | null>>>([]);
     const [_bounds, _setBounds] = useState<ISize | null>(null);
     const [_scrollSize, _setScrollSize] = useState<number>(0);
@@ -88,9 +88,9 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     }));
     const _scrollToRepeatExecutionTimeout = useRef<any>(undefined);
 
-    const _onTrackBoxChangeHandler = useCallback((v: number) => {
+    const _onTrackBoxChangeHandler = useRef((v: number) => {
         _setCacheVersion(v);
-    }, []);
+    });
 
     const mountedDisplayObjects = useMemo(() => {
         return displayObjects.length;
@@ -141,41 +141,56 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         _isVertical.current = isVertical;
     }, [isVertical]);
 
-    const listenCacheChangesIfNeed = useCallback((value: boolean) => {
+    const listenCacheChangesIfNeed = useRef((value: boolean) => {
         if (value) {
-            if (!_trackBox.current.hasEventListener(TRACK_BOX_CHANGE_EVENT_NAME, _onTrackBoxChangeHandler)) {
-                _trackBox.current.addEventListener(TRACK_BOX_CHANGE_EVENT_NAME, _onTrackBoxChangeHandler);
+            if (!_trackBox.current.hasEventListener(TRACK_BOX_CHANGE_EVENT_NAME, _onTrackBoxChangeHandler.current)) {
+                _trackBox.current.addEventListener(TRACK_BOX_CHANGE_EVENT_NAME, _onTrackBoxChangeHandler.current);
             }
         } else {
-            if (_trackBox.current.hasEventListener(TRACK_BOX_CHANGE_EVENT_NAME, _onTrackBoxChangeHandler)) {
-                _trackBox.current.removeEventListener(TRACK_BOX_CHANGE_EVENT_NAME, _onTrackBoxChangeHandler);
+            if (_trackBox.current.hasEventListener(TRACK_BOX_CHANGE_EVENT_NAME, _onTrackBoxChangeHandler.current)) {
+                _trackBox.current.removeEventListener(TRACK_BOX_CHANGE_EVENT_NAME, _onTrackBoxChangeHandler.current);
             }
         }
-    }, [_trackBox, _onTrackBoxChangeHandler]);
+    });
 
     useEffect(() => {
-        listenCacheChangesIfNeed(dynamicSize);
+        listenCacheChangesIfNeed.current(dynamicSize);
     }, [dynamicSize, listenCacheChangesIfNeed]);
 
-    const _onResizeHandler = useCallback(() => {
+    const _onResizeHandler = useRef(() => {
         const b = $containerRef?.current?.getBoundingClientRect();
         if (b) {
             const { width, height } = b;
             _setBounds({ width, height });
         }
-    }, [$containerRef]);
+    });
 
-    const clearScrollToRepeatExecutionTimeout = useCallback(() => {
+    const clearScrollToRepeatExecutionTimeout = useRef(() => {
         clearTimeout(_scrollToRepeatExecutionTimeout.current);
-    }, [_scrollToRepeatExecutionTimeout]);
+    });
 
     const _onScrollHandler = useRef((e?: Event) => {
-        clearScrollToRepeatExecutionTimeout();
+        clearScrollToRepeatExecutionTimeout.current();
 
         const container = $containerRef?.current;
         if (container) {
             const scrollSize = (_isVertical.current ? container.scrollTop : container.scrollLeft);
             _setScrollSize(scrollSize);
+        }
+    });
+
+    const debouncedStopJumpingScroll = useDebounce(() => {
+        _isStopJumpingScroll.current = false;
+    }, 250);
+
+    const _onScrollEndHandler = useRef((e?: Event) => {
+        debouncedStopJumpingScroll.execute.current();
+
+        clearScrollToRepeatExecutionTimeout.current();
+
+        const container = $containerRef?.current;
+        if (container) {
+            container.removeEventListener('scrollend', _onScrollEndHandler.current);
         }
     });
 
@@ -219,7 +234,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     });
 
     useEffect(() => {
-        _onResizeHandler();
+        _onResizeHandler.current();
     }, []);
 
     useEffect(() => {
@@ -230,7 +245,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             $containerRef.current.addEventListener(SCROLL, _onScrollHandler.current);
 
             if (_resizeObserver && !_resizeObserver.current) {
-                _resizeObserver.current = new ResizeObserver(_onResizeHandler);
+                _resizeObserver.current = new ResizeObserver(_onResizeHandler.current);
             }
             if (_resizeObserver && _resizeObserver.current) {
                 _resizeObserver.current.observe($containerRef.current);
@@ -354,7 +369,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
         const container = $containerRef;
         if (container) {
-            clearScrollToRepeatExecutionTimeout();
+            clearScrollToRepeatExecutionTimeout.current();
+            container.current?.removeEventListener('scrollend', _onScrollEndHandler.current);
 
             if (dynamicSize) {
                 if (container && container.current) {
@@ -390,7 +406,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                         notChanged = actualScrollSize === _scrollSize;
 
                     if (!notChanged || iteration < MAX_SCROLL_TO_ITERATIONS) {
-                        clearScrollToRepeatExecutionTimeout();
+                        clearScrollToRepeatExecutionTimeout.current();
                         _scrollToRepeatExecutionTimeout.current = setTimeout(() => {
                             scrollToExecutor(id, BEHAVIOR_INSTANT as ScrollBehavior, iteration + 1, notChanged);
                         });
@@ -405,6 +421,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
                 _setScrollSize(scrollSize);
             } else {
+                _isStopJumpingScroll.current = true;
+                container.current?.addEventListener('scroll', _onScrollEndHandler.current);
                 const index = items.findIndex(item => item.id === id), scrollSize = index * itemSize;
                 const params: ScrollToOptions = { [_isVertical.current ? TOP_PROP_NAME : LEFT_PROP_NAME]: scrollSize, behavior };
                 container.current?.scrollTo(params);
@@ -454,30 +472,38 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
             tracking();
 
-            const container = $containerRef;
+            if (!_isStopJumpingScroll.current) {
+                const container = $containerRef;
 
-            if (container) {
-                const delta = _trackBox.current.delta;
-                actualScrollSize = scrollSize + delta;
-                _trackBox.current.clearDelta();
-                if (_scrollSize !== actualScrollSize) {
-                    const params: ScrollToOptions = {
-                        [_isVertical.current ? TOP_PROP_NAME : LEFT_PROP_NAME]: actualScrollSize,
-                        behavior: BEHAVIOR_INSTANT as ScrollBehavior
-                    };
+                if (container) {
+                    const delta = _trackBox.current.delta;
+                    actualScrollSize = scrollSize + delta;
+                    _trackBox.current.clearDelta();
+                    if (_scrollSize !== actualScrollSize) {
+                        const params: ScrollToOptions = {
+                            [_isVertical.current ? TOP_PROP_NAME : LEFT_PROP_NAME]: actualScrollSize,
+                            behavior: BEHAVIOR_INSTANT as ScrollBehavior
+                        };
 
-                    container.current?.scrollTo(params);
+                        container.current?.scrollTo(params);
+                    }
                 }
             }
         }
     }, [mountedDisplayObjects, $containerRef, _bounds, items, stickyMap, _scrollSize, itemSize, _trackBox,
         itemsOffset, snap, isVertical, dynamicSize, enabledBufferOptimization, _cacheVersion,
-        resetBoundsSize, createDisplayComponentsIfNeed, tracking,
+        _isStopJumpingScroll.current, resetBoundsSize, createDisplayComponentsIfNeed, tracking,
     ]);
 
     useEffect(() => {
         return () => {
-            clearScrollToRepeatExecutionTimeout();
+            if (debouncedStopJumpingScroll) {
+                debouncedStopJumpingScroll.dispose.current();
+            }
+
+            if (clearScrollToRepeatExecutionTimeout) {
+                clearScrollToRepeatExecutionTimeout.current();
+            }
 
             if (_resizeObserveQueue) {
                 _resizeObserveQueue.current = [];

@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 /**
  * Simple debounce function.
  * @link https://github.com/DjonnyX/ng-virtual-list/blob/14.x/projects/ng-virtual-list/src/lib/utils/debounce.ts
@@ -29,3 +31,30 @@ export const debounce = (cb: (...args: Array<any>) => void, debounceTime: number
         dispose,
     };
 };
+
+export const useDebounce = (cb: (...args: Array<any>) => void, debounceTime: number = 0) => {
+    const timeout = useRef<any>(null);
+
+    const dispose = useRef(() => {
+        if (timeout !== undefined) {
+            clearTimeout(timeout.current);
+        }
+    });
+    const execute = useRef((...args: Array<any>) => {
+        dispose.current();
+
+        timeout.current = setTimeout(() => {
+            cb(...args);
+        }, debounceTime);
+    });
+    return {
+        /**
+         *  Call handling method
+         */
+        execute,
+        /**
+         * Method of destroying handlers
+         */
+        dispose,
+    };
+}
