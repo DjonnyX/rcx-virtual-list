@@ -1,6 +1,6 @@
 /**
  * Identifier type
- * @link https://github.com/DjonnyX/ng-virtual-list/blob/14.x/projects/ng-virtual-list/src/lib/types/id.ts
+ * @link https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/types/id.ts
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */

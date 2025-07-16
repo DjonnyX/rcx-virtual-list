@@ -51,6 +51,14 @@ export interface IVirtualListProps {
 
 let __nextId: number = 0;
 
+/**
+ * Virtual list component.
+ * Maximum performance for extremely large lists.
+ * It is based on algorithms for virtualization of screen objects.
+ * @link https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/ng-virtual-list.component.ts
+ * @author Evgenii Grebennikov
+ * @email djonnyx@gmail.com
+ */
 export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     direction = DEFAULT_DIRECTION, dynamicSize = DEFAULT_DYNAMIC_SIZE, enabledBufferOptimization = DEFAULT_ENABLED_BUFFER_OPTIMIZATION,
     itemsOffset: _itemOffset = DEFAULT_ITEMS_OFFSET, itemRenderer, items, itemSize: _itemSize = DEFAULT_ITEM_SIZE, snap = DEFAULT_SNAP,

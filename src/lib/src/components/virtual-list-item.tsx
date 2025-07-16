@@ -31,6 +31,12 @@ export const getNextId = () => { return __nextId; }
 
 const DEFAULT_ITEM_RENDERER_FACTORY = () => <></>;
 
+/**
+ * Virtual list item component
+ * @link https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/components/ng-virtual-list-item.component.ts
+ * @author Evgenii Grebennikov
+ * @email djonnyx@gmail.com
+ */
 export const VirtualListItem = forwardRef<VirtualListItemRefMethods, IVirtualListItemProps>(({ }, forwardedRef) => {
     const $elementRef = createRef<HTMLDivElement>();
     const $listItemRef = createRef<HTMLLIElement>();

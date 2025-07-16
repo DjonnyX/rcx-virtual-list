@@ -6,9 +6,9 @@ Maximum performance for extremely large lists.
 
 Port from [ng-virtual-list](https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list)
 
-<img width="1033" height="171" alt="logo-center1" src="https://github.com/user-attachments/assets/32a5f3da-83e2-4801-882b-b198f2d37e7a" />
+<img width="1033" height="171" alt="logo" src="https://github.com/user-attachments/assets/32a5f3da-83e2-4801-882b-b198f2d37e7a" />
 
-React version 16.X.X - 19.x.x.
+React version 16.X.X - 19.X.X.
 
 [Live Demo](https://rcx-virtual-list-chat-demo.eugene-grebennikov.pro/)
 
@@ -417,20 +417,20 @@ List items are encapsulated in shadowDOM, so to override default styles you need
 
 ## API
 
-[NgVirtualListComponent](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/ng-virtual-list.component.ts)
+[NgVirtualListComponent](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/ng-virtual-list.component.ts)
 
 Inputs
 
 | Property | Type | Description |
 |---|---|---|
 | id | number | Readonly. Returns the unique identifier of the component. | 
-| items | [IVirtualListCollection](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/models/collection.model.ts) | Collection of list items. The collection of elements must be immutable. |
+| items | [IVirtualListCollection](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/collection.model.ts) | Collection of list items. The collection of elements must be immutable. |
 | itemSize | number? = 24 | If direction = 'vertical', then the height of a typical element. If direction = 'horizontal', then the width of a typical element. Ignored if the dynamicSize property is true. |
 | itemsOffset | number? = 2 | Number of elements outside the scope of visibility. Default value is 2. |
 | itemRenderer | TemplateRef | Rendering element template. |
-| stickyMap | [IVirtualListStickyMap?](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/models/sticky-map.model.ts) | Dictionary zIndex by id of the list element. If the value is not set or equal to 0, then a simple element is displayed, if the value is greater than 0, then the sticky position mode is enabled for the element. |
+| stickyMap | [IVirtualListStickyMap?](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/sticky-map.model.ts) | Dictionary zIndex by id of the list element. If the value is not set or equal to 0, then a simple element is displayed, if the value is greater than 0, then the sticky position mode is enabled for the element. |
 | snap | boolean? = false | Determines whether elements will snap. Default value is "false". |
-| direction | [Direction? = 'vertical'](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/enums/direction.ts) | Determines the direction in which elements are placed. Default value is "vertical". |
+| direction | [Direction? = 'vertical'](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/enums/direction.ts) | Determines the direction in which elements are placed. Default value is "vertical". |
 | dynamicSize | boolean? = false | If true then the items in the list can have different sizes and the itemSize property is ignored. If false then the items in the list have a fixed size specified by the itemSize property. The default value is false. |
 | enabledBufferOptimization | boolean? = true | Experimental! Enables buffer optimization. Can only be used if items in the collection are not added or updated. |
 | trackBy | string? = 'id' | The name of the property by which tracking is performed. |
@@ -441,8 +441,8 @@ Outputs
 
 | Event | Type | Description |
 |---|---|---|
-| onScroll | ([IScrollEvent](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/models/scroll-event.model.ts)) => void | Fires when the list has been scrolled. |
-| onScrollEnd | ([IScrollEvent](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/models/scroll-event.model.ts)) => void | Fires when the list has completed scrolling. |
+| onScroll | ([IScrollEvent](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/scroll-event.model.ts)) => void | Fires when the list has been scrolled. |
+| onScrollEnd | ([IScrollEvent](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/scroll-event.model.ts)) => void | Fires when the list has completed scrolling. |
 
 <br/>
 
@@ -450,9 +450,9 @@ Methods
 
 | Method | Type | Description |
 |--|--|--|
-| scrollTo | (id: [Id](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/types/id.ts), behavior: ScrollBehavior = 'auto') => number | The method scrolls the list to the element with the given id and returns the value of the scrolled area. Behavior accepts the values ​​"auto", "instant" and "smooth". |
+| scrollTo | (id: [Id](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/types/id.ts), behavior: ScrollBehavior = 'auto') => number | The method scrolls the list to the element with the given id and returns the value of the scrolled area. Behavior accepts the values ​​"auto", "instant" and "smooth". |
 | scrollToEnd | (behavior?: ScrollBehavior) => void | Scrolls the scroll area to the desired element with the specified ID. |
-| getItemBounds | (id: [Id](https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/types/id.ts), behavior?: ScrollBehavior) => void | Returns the bounds of an element with a given id |
+| getItemBounds | (id: [Id](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/types/id.ts), behavior?: ScrollBehavior) => void | Returns the bounds of an element with a given id |
 
 <br/>
 

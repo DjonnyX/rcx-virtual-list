@@ -208,9 +208,9 @@ function App() {
         <h1 className="center">rcx-virtual-list</h1>
         <p className="l">Maximum performance for extremely large lists</p>
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
-        <p className="l m">Port of <a href='https://github.com/djonnyx/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
+        <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.0.beta.8</span></div>
+        <div className="version"><span>v 1.0.0.beta.9</span></div>
         <div className="version"><span>React v 16.x - v 19.x</span></div>
       </div>
 
