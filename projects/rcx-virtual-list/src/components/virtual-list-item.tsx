@@ -1,9 +1,11 @@
-import React, { createRef, forwardRef, ReactNode, useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import React, { createRef, forwardRef, ReactNode, useCallback, useImperativeHandle, useState } from 'react';
 import { IVirtualListItem } from '../models';
 import { IRenderVirtualListItem } from '../models/render-item.model';
 import { IRenderVirtualListItemConfig } from '../models/render-item-config.model';
 import { Id, ISize } from '../types';
 import {
+    DEFAULT_ZINDEX,
+    HIDDEN_ZINDEX,
     POSITION_ABSOLUTE, POSITION_STICKY, PX, SIZE_100_PERSENT, SIZE_AUTO, TRANSLATE_3D, VISIBILITY_HIDDEN,
     VISIBILITY_VISIBLE, ZEROS_TRANSLATE_3D
 } from '../const';
@@ -64,6 +66,7 @@ export const VirtualListItem = forwardRef<VirtualListItemRefMethods, IVirtualLis
                 return;
             }
 
+            styles.zIndex = String(_data?.config?.sticky ?? DEFAULT_ZINDEX);
             styles.visibility = VISIBILITY_VISIBLE;
         }
     }, [$elementRef]);
@@ -78,6 +81,7 @@ export const VirtualListItem = forwardRef<VirtualListItemRefMethods, IVirtualLis
 
             styles.visibility = VISIBILITY_HIDDEN;
             styles.transform = ZEROS_TRANSLATE_3D;
+            styles.zIndex = HIDDEN_ZINDEX;
         }
     }, [$elementRef]);
 
@@ -111,7 +115,7 @@ export const VirtualListItem = forwardRef<VirtualListItemRefMethods, IVirtualLis
     }));
 
     const classNames = useCallback((data: IRenderVirtualListItem, ...classes: Array<string>) => {
-        const result = ['rcxvl__item', 'rcxvl-item__container', ...(classes ?? [])];
+        const result = ['rcxvl__item-container', ...(classes ?? [])];
         if (data.config.snapped) {
             result.push('snapped');
         }
@@ -121,7 +125,7 @@ export const VirtualListItem = forwardRef<VirtualListItemRefMethods, IVirtualLis
         return result.join(' ');
     }, []);
 
-    return <div ref={$elementRef} className='rcxvl-item'>
+    return <div ref={$elementRef} className='rcxvl__item'>
         {
             _data &&
             <li ref={$listItemRef} className={classNames(_data)}>

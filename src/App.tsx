@@ -213,7 +213,7 @@ function App() {
         <div className="version"><span>v 16.x - v 19.x</span></div>
       </div>
 
-      <div className="vl-section">
+      {/* <div className="vl-section">
         <div className="vl-section__container">
           <h2>Horizontal list</h2>
           <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory(onItemClick)} items={horizontalItems}
@@ -264,7 +264,7 @@ function App() {
           <VirtualList className="list" items={groupItems1} itemRenderer={groupItemRendererFactory(onItemClick)} itemsOffset={50}
             stickyMap={groupItemsStickyMap1} itemSize={40} snap={true} />
         </div>
-      </div>
+      </div> */}
 
       <div className="vl-section">
         <div className="vl-section__container">
@@ -275,7 +275,7 @@ function App() {
             <button className="scroll-to__button" onClick={onButtonScrollDLToIdClickHandler}>Scroll</button>
           </div>
           <VirtualList ref={$listContainerRef1} className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory(onItemClick)}
-            itemsOffset={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
+            itemsOffset={10} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
         </div>
       </div >
 

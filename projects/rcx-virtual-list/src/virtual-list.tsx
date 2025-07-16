@@ -1,8 +1,9 @@
-import React, { createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { IScrollEvent, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap } from './models';
 import {
     BEHAVIOR_AUTO, BEHAVIOR_INSTANT, CLASS_LIST_HORIZONTAL, CLASS_LIST_VERTICAL,
     DEFAULT_DIRECTION, DEFAULT_DYNAMIC_SIZE, DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_ITEMS_OFFSET,
+    DEFAULT_LIST_SIZE,
     DEFAULT_SNAP, HEIGHT_PROP_NAME, LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME, TRACK_BY_PROPERTY_NAME,
     WIDTH_PROP_NAME,
 } from './const';
@@ -162,6 +163,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         if (b) {
             const { width, height } = b;
             _setBounds({ width, height });
+        } else {
+            _setBounds({ width: DEFAULT_LIST_SIZE, height: DEFAULT_LIST_SIZE });
         }
     });
 
@@ -190,7 +193,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
         const container = $containerRef?.current;
         if (container) {
-            container.removeEventListener('scrollend', _onScrollEndHandler.current);
+            container.removeEventListener(SCROLL_END, _onScrollEndHandler.current);
         }
     });
 
@@ -287,22 +290,26 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     const _resizeObserveQueue = useRef<Array<React.RefObject<VirtualListItemRefMethods | null>>>([]);
 
     const executeResizeObserverQueue = useCallback(() => {
+        let isChanged = false;
         const queue = _resizeObserveQueue.current, newQueue: Array<RefObject<VirtualListItemRefMethods | null>> = [];
         for (let l = queue.length, ei = l - 1, i = ei; i >= 0; i--) {
             const ref = queue[i], el = ref.current?.getElement();
             if (el) {
+                isChanged = true;
                 _resizeObserver.current?.observe(el);
                 _resizeObserveQueue.current.slice(i, 1);
-
-                _setCacheVersion(v => v - 1);
                 continue;
             }
 
             newQueue.push(ref);
         }
 
+        if (isChanged) {
+            _setCacheVersion(v => v - 1);
+        }
+
         _resizeObserveQueue.current = newQueue;
-    }, [_resizeObserver, _resizeObserveQueue]);
+    }, [_resizeObserver, _resizeObserveQueue, _setCacheVersion]);
 
     const waitToResizeObserve = useCallback((ref: React.RefObject<VirtualListItemRefMethods | null>) => {
         _resizeObserveQueue.current.push(ref);
@@ -312,7 +319,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         if (mountedDisplayObjects) {
             executeResizeObserverQueue();
         }
-    }, [mountedDisplayObjects]);
+    }, [mountedDisplayObjects, executeResizeObserverQueue]);
 
     const createDisplayComponentsIfNeed = useCallback((displayItems: IRenderVirtualListCollection | null) => {
         if (!displayItems || !$listRef) {
@@ -370,7 +377,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         const container = $containerRef;
         if (container) {
             clearScrollToRepeatExecutionTimeout.current();
-            container.current?.removeEventListener('scrollend', _onScrollEndHandler.current);
+            container.current?.removeEventListener(SCROLL_END, _onScrollEndHandler.current);
 
             if (dynamicSize) {
                 if (container && container.current) {
@@ -421,9 +428,14 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
                 _setScrollSize(scrollSize);
             } else {
-                _isStopJumpingScroll.current = true;
-                container.current?.addEventListener('scroll', _onScrollEndHandler.current);
-                const index = items.findIndex(item => item.id === id), scrollSize = index * itemSize;
+                const isVertical = _isVertical.current,
+                    _scrollSize = (isVertical ? container.current?.scrollTop ?? 0 : container.current?.scrollLeft ?? 0),
+                    index = items.findIndex(item => item.id === id), scrollSize = index * itemSize;
+
+                if (_scrollSize !== scrollSize) {
+                    _isStopJumpingScroll.current = true;
+                    container.current?.addEventListener('scroll', _onScrollEndHandler.current);
+                }
                 const params: ScrollToOptions = { [_isVertical.current ? TOP_PROP_NAME : LEFT_PROP_NAME]: scrollSize, behavior };
                 container.current?.scrollTo(params);
             }

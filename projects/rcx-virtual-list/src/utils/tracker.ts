@@ -96,6 +96,7 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
                     const ref = el;
                     if (ref.current) {
                         ref.current.setData(item);
+                        ref.current.show();
 
                         if (this._trackMap) {
                             this._trackMap[itemTrackingProperty] = ref.current.id;

@@ -4,7 +4,7 @@ Maximum performance for extremely large lists.
 
 [Beta version]
 
-Port of [ng-virtual-list](https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list)
+Port from [ng-virtual-list](https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list)
 
 <img width="1033" height="171" alt="logo-center1" src="https://github.com/user-attachments/assets/32a5f3da-83e2-4801-882b-b198f2d37e7a" />
 
@@ -46,6 +46,10 @@ for (let i = 0, l = MAX_ITEMS; i < l; i++) {
 
 function App() {
   const [horizontalItems] = useState([...HORIZONTAL_ITEMS]);
+
+  const onItemClick = (data: IVirtualListItem) => () => {
+    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  };
 
   return <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory(onItemClick)} items={horizontalItems}
     itemSize={54} itemsOffset={50} />
@@ -122,6 +126,10 @@ for (let i = 0, l = MAX_ITEMS; i < l; i++) {
 function App() {
   const [verticalItems] = useState([...ITEMS]);
 
+  const onItemClick = (data: IVirtualListItem) => () => {
+    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  };
+
   return <VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
             items={verticalItems} itemSize={40} itemsOffset={50} />
 }
@@ -167,6 +175,10 @@ function App() {
   const [groupItems] = useState([...GROUP_ITEMS]);
   const [groupItemsStickyMap] = useState({ ...GROUP_ITEMS_STICKY_MAP });
 
+  const onItemClick = (data: IVirtualListItem) => () => {
+    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  };
+
   return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} itemsOffset={50}
             stickyMap={groupItemsStickyMap} itemSize={40} />
 }
@@ -210,6 +222,10 @@ function App() {
   const [groupItems] = useState([...GROUP_ITEMS]);
   const [groupItemsStickyMap] = useState({ ...GROUP_ITEMS_STICKY_MAP });
 
+  const onItemClick = (data: IVirtualListItem) => () => {
+    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  };
+
   return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} itemsOffset={50}
             stickyMap={groupItemsStickyMap} itemSize={40} snap={true} />
 }
@@ -240,7 +256,19 @@ for (let i = 0, l = MAX_ITEMS; i < l; i++) {
 }
 
 function App() {
+  const $listContainerRef = useRef<IVirtualListMethods>(null);
   const [verticalItems] = useState([...ITEMS]);
+  const [minId] = useState<Id>(() => {
+    return verticalItems1.length > 0 ? verticalItems1[0].id : 0;
+  });
+  const [maxId] = useState<Id>(() => {
+    return verticalItems1.length > 0 ? verticalItems1[verticalItems1.length - 1].id : 0;
+  });
+  const itemId = useRef<Id>(minId);
+
+  const onItemClick = (data: IVirtualListItem) => () => {
+    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  };
 
   return <>
     <div className="scroll-to__controls">
@@ -260,7 +288,7 @@ Virtual list with height-adjustable elements.
 
 ![preview](https://github.com/user-attachments/assets/3c7e8779-c15d-4eb5-a1c5-d774f614fbaf)
 
-Template
+Code
 ```tsx
 const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
   if (!data) {
@@ -322,6 +350,10 @@ for (let i = 0, l = MAX_ITEMS; i < l; i++) {
 function App() {
   const [groupDynamicItems] = useState([...GROUP_DYNAMIC_ITEMS]);
   const [groupDynamicItemsStickyMap] = useState({ ...GROUP_DYNAMIC_ITEMS_STICKY_MAP });
+
+  const onItemClick = (data: IVirtualListItem) => () => {
+    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  };
 
 function App () {
   return <VirtualList className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory(onItemClick)}

@@ -6,7 +6,7 @@ import { Tracker } from "./tracker";
 import { ISize } from "../types";
 import { HEIGHT_PROP_NAME, WIDTH_PROP_NAME, X_PROP_NAME, Y_PROP_NAME } from "../const";
 import { IVirtualListStickyMap } from "../models";
-import { IVirtualListItemProps, VirtualListItemRefMethods } from "../components/virtual-list-item";
+import { VirtualListItemRefMethods } from "../components/virtual-list-item";
 
 export const TRACK_BOX_CHANGE_EVENT_NAME = 'change';
 
@@ -20,7 +20,7 @@ export interface IMetrics {
     itemSize: number;
     itemsFromStartToScrollEnd: number;
     itemsFromStartToDisplayEnd: number;
-    itemsOnDisplay: number;
+    itemsOnDisplayWeight: number;
     itemsOnDisplayLength: number;
     isVertical: boolean;
     leftHiddenItemsWeight: number;
@@ -427,7 +427,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
 
                 let componentSize = typicalItemSize, componentSizeDelta = 0, itemDisplayMethod: ItemDisplayMethods = ItemDisplayMethods.NOT_CHANGED;
                 if (map.has(id)) {
-                    const bounds = map.get(id) || { width: typicalItemSize, height: typicalItemSize };
+                    const bounds = map.get(id);
                     componentSize = bounds[sizeProperty];
                     itemDisplayMethod = bounds?.method ?? ItemDisplayMethods.UPDATE;
                     switch (itemDisplayMethod) {
@@ -615,7 +615,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         }
         startIndex = Math.min(itemsFromStartToScrollEnd - leftItemLength, totalLength > 0 ? totalLength - 1 : 0);
 
-        const itemsOnDisplay = totalItemsToDisplayEndWeight - leftHiddenItemsWeight,
+        const itemsOnDisplayWeight = totalItemsToDisplayEndWeight - leftItemsWeight,
             itemsOnDisplayLength = itemsFromStartToDisplayEnd - itemsFromStartToScrollEnd,
             startPosition = leftHiddenItemsWeight - leftItemsWeight,
             renderItems = itemsOnDisplayLength + leftItemLength + rightItemLength,
@@ -631,7 +631,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
             itemSize,
             itemsFromStartToScrollEnd,
             itemsFromStartToDisplayEnd,
-            itemsOnDisplay,
+            itemsOnDisplayWeight,
             itemsOnDisplayLength,
             isVertical,
             leftHiddenItemsWeight,
