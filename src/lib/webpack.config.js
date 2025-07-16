@@ -14,7 +14,7 @@ module.exports = function (env, argv) {
             filename: 'index.js',
             library: '$',
             libraryTarget: 'umd',
-            path: path.resolve(__dirname, 'dist'),
+            path: path.resolve(__dirname, '../../', 'dist'),
         },
         devtool: 'source-map',
         module: {
