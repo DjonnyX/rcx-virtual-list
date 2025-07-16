@@ -1,12 +1,12 @@
 {
   "name": "rcx-virtual-list",
-  "version": "1.0.0.beta.9",
+  "version": "1.0.0.beta.10",
   "author": {
     "name": "Evgenii Grebennikov",
     "email": "djonnyx@gmail.com"
   },
   "license": "MIT",
-  "homepage": "https://github.com/djonnyx/rcx-virtual-list/tree/main/projects/rcx-virtual-list",
+  "homepage": "https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib",
   "keywords": [
     "rc",
     "react",
