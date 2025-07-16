@@ -427,7 +427,7 @@ Inputs
 | items | [IVirtualListCollection](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/collection.model.ts) | Collection of list items. The collection of elements must be immutable. |
 | itemSize | number? = 24 | If direction = 'vertical', then the height of a typical element. If direction = 'horizontal', then the width of a typical element. Ignored if the dynamicSize property is true. |
 | itemsOffset | number? = 2 | Number of elements outside the scope of visibility. Default value is 2. |
-| itemRenderer | TemplateRef | Rendering element template. |
+| itemRenderer | (data: { data: [IVirtualListItem](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/item.model.ts), config: [IRenderVirtualListItemConfig](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/render-item-config.model.ts) }) => ReactNode | Rendering element factory. |
 | stickyMap | [IVirtualListStickyMap?](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/sticky-map.model.ts) | Dictionary zIndex by id of the list element. If the value is not set or equal to 0, then a simple element is displayed, if the value is greater than 0, then the sticky position mode is enabled for the element. |
 | snap | boolean? = false | Determines whether elements will snap. Default value is "false". |
 | direction | [Direction? = 'vertical'](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/enums/direction.ts) | Determines the direction in which elements are placed. Default value is "vertical". |
