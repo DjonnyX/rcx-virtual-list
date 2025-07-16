@@ -430,23 +430,18 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
                     const bounds = map.get(id) || { width: typicalItemSize, height: typicalItemSize };
                     componentSize = bounds[sizeProperty];
                     itemDisplayMethod = bounds?.method ?? ItemDisplayMethods.UPDATE;
-                    if (this._tracker.displayObjectIndexMapById.hasOwnProperty(id)) {
-                        const index = this._tracker.displayObjectIndexMapById[id as number];
-                        if (this._displayComponents[index]?.current) {
-                            switch (itemDisplayMethod) {
-                                case ItemDisplayMethods.UPDATE: {
-                                    const snapshotBounds = snapshot.get(id);
-                                    const componentSnapshotSize = componentSize - (snapshotBounds ? snapshotBounds[sizeProperty] : typicalItemSize);
-                                    componentSizeDelta = componentSnapshotSize;
-                                    map.set(id, { ...bounds, method: ItemDisplayMethods.NOT_CHANGED });
-                                    break;
-                                }
-                                case ItemDisplayMethods.CREATE: {
-                                    componentSizeDelta = typicalItemSize;
-                                    map.set(id, { ...bounds, method: ItemDisplayMethods.NOT_CHANGED });
-                                    break;
-                                }
-                            }
+                    switch (itemDisplayMethod) {
+                        case ItemDisplayMethods.UPDATE: {
+                            const snapshotBounds = snapshot.get(id);
+                            const componentSnapshotSize = componentSize - (snapshotBounds ? snapshotBounds[sizeProperty] : typicalItemSize);
+                            componentSizeDelta = componentSnapshotSize;
+                            map.set(id, { ...bounds, method: ItemDisplayMethods.NOT_CHANGED });
+                            break;
+                        }
+                        case ItemDisplayMethods.CREATE: {
+                            componentSizeDelta = typicalItemSize;
+                            map.set(id, { ...bounds, method: ItemDisplayMethods.NOT_CHANGED });
+                            break;
                         }
                     }
                 }

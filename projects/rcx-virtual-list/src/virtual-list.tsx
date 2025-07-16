@@ -440,9 +440,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useEffect(() => {
         if (_initialized && _bounds && items) {
-            const { width, height } = _bounds, delta = _trackBox.current.delta,
-                scrollSize = (_isVertical.current ? $containerRef?.current?.scrollTop ?? 0 : $containerRef?.current?.scrollLeft) ?? 0,
-                actualScrollSize = scrollSize + delta;
+            const { width, height } = _bounds, scrollSize = (_isVertical.current ? $containerRef?.current?.scrollTop ?? 0 : $containerRef?.current?.scrollLeft) ?? 0;
+            let actualScrollSize = scrollSize;
             const opts: IUpdateCollectionOptions<IVirtualListItem, IVirtualListCollection> = {
                 bounds: { width, height }, dynamicSize, isVertical, itemSize,
                 itemsOffset, scrollSize: actualScrollSize, snap, enabledBufferOptimization,
@@ -458,8 +457,10 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             const container = $containerRef;
 
             if (container) {
+                const delta = _trackBox.current.delta;
+                actualScrollSize = scrollSize + delta;
                 _trackBox.current.clearDelta();
-                if (scrollSize !== actualScrollSize) {
+                if (_scrollSize !== actualScrollSize) {
                     const params: ScrollToOptions = {
                         [_isVertical.current ? TOP_PROP_NAME : LEFT_PROP_NAME]: actualScrollSize,
                         behavior: BEHAVIOR_INSTANT as ScrollBehavior
