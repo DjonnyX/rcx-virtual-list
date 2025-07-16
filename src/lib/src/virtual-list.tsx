@@ -187,7 +187,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     }, 250);
 
     const _onScrollEndHandler = useRef((e?: Event) => {
-        debouncedStopJumpingScroll.execute.current();
+        debouncedStopJumpingScroll.execute();
 
         clearScrollToRepeatExecutionTimeout.current();
 
@@ -269,8 +269,12 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
     }, [$containerRef, _resizeObserver, _onResizeHandler, _onScrollHandler, _onContainerScrollHandler, _onContainerScrollEndHandler]);
 
-    useEffect(() => {
+    const debouncedResetCollection = useDebounce((_trackBox: RefObject<TrackBox>, items: IVirtualListCollection | undefined, itemSize: number) => {
         _trackBox.current.resetCollection(items, itemSize);
+    });
+
+    useEffect(() => {
+        debouncedResetCollection.execute(_trackBox, items, itemSize);
     }, [_trackBox, items, itemSize]);
 
     const resetRenderers = useCallback((renderer?: VirtualListItemRenderer) => {
@@ -311,9 +315,9 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         _resizeObserveQueue.current = newQueue;
     }, [_resizeObserver, _resizeObserveQueue, _setCacheVersion]);
 
-    const waitToResizeObserve = useCallback((ref: React.RefObject<VirtualListItemRefMethods | null>) => {
+    const waitToResizeObserve = useRef((ref: React.RefObject<VirtualListItemRefMethods | null>) => {
         _resizeObserveQueue.current.push(ref);
-    }, [_resizeObserveQueue]);
+    });
 
     useEffect(() => {
         if (mountedDisplayObjects) {
@@ -329,21 +333,26 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
         _trackBox.current.items = displayItems;
 
+        let isChanged = false;
+
         const _listContainerRef = $listRef,
-            maxLength = displayItems.length,
             components = _displayComponents.current;
 
-        while (components.length < maxLength) {
+        while (components.length < displayItems.length) {
             if (_listContainerRef) {
+                isChanged = true;
+
                 const ref = createRef<VirtualListItemRefMethods>();
 
                 components.push(ref);
 
-                waitToResizeObserve(ref);
+                waitToResizeObserve.current(ref);
             }
         }
 
-        _setDisplayComponentsList(components);
+        if (isChanged) {
+            _setDisplayComponentsList([...components]);
+        }
 
         resetRenderers();
     }, [$listRef, _trackBox, _displayComponents, resetRenderers, waitToResizeObserve]);
@@ -509,8 +518,12 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useEffect(() => {
         return () => {
+            if (debouncedResetCollection) {
+                debouncedResetCollection.dispose();
+            }
+
             if (debouncedStopJumpingScroll) {
-                debouncedStopJumpingScroll.dispose.current();
+                debouncedStopJumpingScroll.dispose();
             }
 
             if (clearScrollToRepeatExecutionTimeout) {

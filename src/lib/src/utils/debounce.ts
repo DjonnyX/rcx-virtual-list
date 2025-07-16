@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import React, { useRef } from "react";
 
 /**
  * Simple debounce function.
@@ -51,10 +51,10 @@ export const useDebounce = (cb: (...args: Array<any>) => void, debounceTime: num
         /**
          *  Call handling method
          */
-        execute,
+        execute: execute.current,
         /**
          * Method of destroying handlers
          */
-        dispose,
+        dispose: dispose.current,
     };
 }

@@ -6,7 +6,7 @@ import { LOGO } from './const';
 import { VirtualListItemRenderer } from './lib/src/components';
 import { IVirtualListMethods } from './lib/src/virtual-list';
 
-const MAX_ITEMS = 100000;
+const MAX_ITEMS = 10000;
 
 const ITEMS: IVirtualListCollection = [];
 for (let i = 0, l = MAX_ITEMS; i < l; i++) {
@@ -210,10 +210,11 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/djonnyx/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 16.x - v 19.x</span></div>
+        <div className="version"><span>v 1.0.0.beta.8</span></div>
+        <div className="version"><span>React v 16.x - v 19.x</span></div>
       </div>
 
-      {/* <div className="vl-section">
+      <div className="vl-section">
         <div className="vl-section__container">
           <h2>Horizontal list</h2>
           <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory(onItemClick)} items={horizontalItems}
@@ -264,7 +265,7 @@ function App() {
           <VirtualList className="list" items={groupItems1} itemRenderer={groupItemRendererFactory(onItemClick)} itemsOffset={50}
             stickyMap={groupItemsStickyMap1} itemSize={40} snap={true} />
         </div>
-      </div> */}
+      </div>
 
       <div className="vl-section">
         <div className="vl-section__container">
@@ -275,7 +276,7 @@ function App() {
             <button className="scroll-to__button" onClick={onButtonScrollDLToIdClickHandler}>Scroll</button>
           </div>
           <VirtualList ref={$listContainerRef1} className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory(onItemClick)}
-            itemsOffset={10} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
+            itemsOffset={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
         </div>
       </div >
 
