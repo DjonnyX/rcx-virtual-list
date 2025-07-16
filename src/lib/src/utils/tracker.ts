@@ -12,7 +12,7 @@ interface IVirtualListItemComponent<I = any> {
 
 /**
  * Tracks display items by property
- * @link https://github.com/DjonnyX/ng-virtual-list/blob/14.x/projects/ng-virtual-list/src/lib/utils/tracker.ts
+ * @link https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/utils/tracker.ts
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */

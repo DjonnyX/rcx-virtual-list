@@ -86,7 +86,7 @@ interface IUpdateCollectionReturns {
 
 /**
  * An object that performs tracking, calculations and caching.
- * @link https://github.com/DjonnyX/rcx-virtual-list/blob/main/projects/rcx-virtual-list/src/utils/trackBox.ts
+ * @link https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/utils/trackBox.ts
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */

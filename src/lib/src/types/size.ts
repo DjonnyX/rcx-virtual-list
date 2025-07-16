@@ -1,6 +1,6 @@
 /**
  * Area area Interface
- * @link https://github.com/DjonnyX/ng-virtual-list/blob/14.x/projects/ng-virtual-list/src/lib/types/size.ts
+ * @link https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/types/size.ts
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */

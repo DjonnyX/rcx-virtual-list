@@ -11,7 +11,7 @@ interface IScrollEventParams {
 
 /**
  * Scroll event.
- * @link https://github.com/DjonnyX/ng-virtual-list/blob/14.x/projects/ng-virtual-list/src/lib/utils/scrollEvent.ts
+ * @link https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/utils/scrollEvent.ts
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
