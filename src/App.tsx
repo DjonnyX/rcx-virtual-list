@@ -3,8 +3,8 @@ import { Id, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap, Vi
 import './lib/index.css';
 import './App.scss';
 import { LOGO } from './const';
-import { VirtualListItemRenderer } from './lib/src/components';
-import { IVirtualListMethods } from './lib/src/virtual-list';
+import { VirtualListItemRenderer } from './lib/src/models';
+import { IVirtualListMethods } from './lib/src/models';
 
 const MAX_ITEMS = 10000;
 
@@ -82,7 +82,7 @@ const GROUP_DYNAMIC_ITEMS: IVirtualListCollection = [],
   GROUP_DYNAMIC_ITEMS_STICKY_MAP_WITH_SNAP: IVirtualListStickyMap = {};
 
 let groupDynamicIndex = 0;
-for (let i = 0, l = MAX_ITEMS; i < l; i++) {
+for (let i = 0, l = 100000; i < l; i++) {
   const id = i + 1, type = i === 0 || Math.random() > .895 ? 'group-header' : 'item';
   if (type === 'group-header') {
     groupDynamicIndex++;
@@ -210,7 +210,7 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.0-beta-11</span></div>
+        <div className="version"><span>v 1.0.0-beta-12</span></div>
         <div className="version"><span>React v 16.x - v 19.x</span></div>
       </div>
 

@@ -6,7 +6,7 @@ import { Tracker } from "./tracker";
 import { ISize } from "../types";
 import { HEIGHT_PROP_NAME, WIDTH_PROP_NAME, X_PROP_NAME, Y_PROP_NAME } from "../const";
 import { IVirtualListStickyMap } from "../models";
-import { VirtualListItemRefMethods } from "../components/virtual-list-item";
+import { IVirtualListItemMethods } from "../models/virtual-list-item-ref-methods.model";
 
 export const TRACK_BOX_CHANGE_EVENT_NAME = 'change';
 
@@ -103,9 +103,9 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         this._items = v;
     }
 
-    protected _displayComponents!: Array<React.RefObject<VirtualListItemRefMethods | null>>;
+    protected _displayComponents!: Array<React.RefObject<IVirtualListItemMethods | null>>;
 
-    set displayComponents(v: Array<React.RefObject<VirtualListItemRefMethods | null>>) {
+    set displayComponents(v: Array<React.RefObject<IVirtualListItemMethods | null>>) {
         if (this._displayComponents === v) {
             return;
         }
@@ -802,7 +802,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         this._tracker.displayObjectIndexMapById = v;
     }
 
-    untrackComponentByIdProperty(component?: React.RefObject<VirtualListItemRefMethods | null> | undefined) {
+    untrackComponentByIdProperty(component?: React.RefObject<IVirtualListItemMethods | null> | undefined) {
         this._tracker.untrackComponentByIdProperty(component);
     }
 

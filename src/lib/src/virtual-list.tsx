@@ -1,37 +1,21 @@
 import React, { createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { IScrollEvent, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap } from './models';
 import {
-    BEHAVIOR_AUTO, BEHAVIOR_INSTANT, CLASS_LIST_HORIZONTAL, CLASS_LIST_VERTICAL,
-    DEFAULT_DIRECTION, DEFAULT_DYNAMIC_SIZE, DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_ITEMS_OFFSET,
-    DEFAULT_LIST_SIZE,
-    DEFAULT_SNAP, HEIGHT_PROP_NAME, LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME, TRACK_BY_PROPERTY_NAME,
-    WIDTH_PROP_NAME,
+    IScrollEvent, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap, IVirtualListItemMethods,
+    VirtualListItemRenderer, IVirtualListMethods,
+} from './models';
+import {
+    BEHAVIOR_AUTO, BEHAVIOR_INSTANT, CLASS_LIST_HORIZONTAL, CLASS_LIST_VERTICAL, DEFAULT_DIRECTION, DEFAULT_DYNAMIC_SIZE,
+    DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_ITEMS_OFFSET, DEFAULT_LIST_SIZE, DEFAULT_SNAP, HEIGHT_PROP_NAME,
+    LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME, TRACK_BY_PROPERTY_NAME, WIDTH_PROP_NAME,
 } from './const';
 import { isDirection, ScrollEvent, toggleClassName, TrackBox } from './utils';
 import { Direction, Directions } from './enums';
 import { VirtualListItem } from './components';
 import { IGetItemPositionOptions, IUpdateCollectionOptions, TRACK_BOX_CHANGE_EVENT_NAME } from './utils/trackBox';
 import { IRenderVirtualListCollection } from './models/render-collection.model';
-import { VirtualListItemRefMethods, VirtualListItemRenderer } from './components/virtual-list-item';
 import { useDebounce } from './utils/debounce';
 import { Id } from './types/id';
 import { ISize } from './types/size';
-
-export interface IVirtualListMethods {
-    /**
-     * Returns the bounds of an element with a given id
-     */
-    getItemBounds: (id: Id) => ISize | undefined;
-    /**
-     * The method scrolls the list to the element with the given id and returns the value of the scrolled area.
-     * Behavior accepts the values ​​"auto", "instant" and "smooth".
-     */
-    scrollTo: (id: Id, behavior?: ScrollBehavior) => void;
-    /**
-     * Scrolls the scroll area to the desired element with the specified ID.
-     */
-    scrollToEnd: (behavior?: ScrollBehavior) => void;
-}
 
 export interface IVirtualListProps {
     className?: string;
@@ -74,8 +58,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     });
     const _trackBox = useRef(new TrackBox(trackBy));
     const _isStopJumpingScroll = useRef<boolean>(false);
-    const _displayComponents = useRef<Array<React.RefObject<VirtualListItemRefMethods | null>>>([]);
-    const [_displayComponentsList, _setDisplayComponentsList] = useState<Array<React.RefObject<VirtualListItemRefMethods | null>>>([]);
+    const _displayComponents = useRef<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
+    const [_displayComponentsList, _setDisplayComponentsList] = useState<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
     const [_bounds, _setBounds] = useState<ISize | null>(null);
     const [_scrollSize, _setScrollSize] = useState<number>(0);
     const _resizeObserver = useRef<ResizeObserver | null>(null);
@@ -299,11 +283,11 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         _trackBox.current.setDisplayObjectIndexMapById(doMap);
     }, [_trackBox, _displayComponents, itemRenderer]);
 
-    const _resizeObserveQueue = useRef<Array<React.RefObject<VirtualListItemRefMethods | null>>>([]);
+    const _resizeObserveQueue = useRef<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
 
     const executeResizeObserverQueue = useCallback(() => {
         let isChanged = false;
-        const queue = _resizeObserveQueue.current, newQueue: Array<RefObject<VirtualListItemRefMethods | null>> = [];
+        const queue = _resizeObserveQueue.current, newQueue: Array<RefObject<IVirtualListItemMethods | null>> = [];
         for (let l = queue.length, ei = l - 1, i = ei; i >= 0; i--) {
             const ref = queue[i], el = ref.current?.getElement();
             if (el) {
@@ -323,7 +307,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         _resizeObserveQueue.current = newQueue;
     }, [_resizeObserver, _resizeObserveQueue, _setCacheVersion]);
 
-    const waitToResizeObserve = useRef((ref: React.RefObject<VirtualListItemRefMethods | null>) => {
+    const waitToResizeObserve = useRef((ref: React.RefObject<IVirtualListItemMethods | null>) => {
         _resizeObserveQueue.current.push(ref);
     });
 
@@ -350,7 +334,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             if (_listContainerRef) {
                 isChanged = true;
 
-                const ref = createRef<VirtualListItemRefMethods>();
+                const ref = createRef<IVirtualListItemMethods>();
 
                 components.push(ref);
 

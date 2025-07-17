@@ -1,28 +1,11 @@
-import React, { createRef, forwardRef, ReactNode, useCallback, useImperativeHandle, useState } from 'react';
-import { IVirtualListItem } from '../models';
+import React, { createRef, forwardRef, useCallback, useImperativeHandle, useState } from 'react';
+import { IVirtualListItemMethods, VirtualListItemRenderer } from '../models';
 import { IRenderVirtualListItem } from '../models/render-item.model';
-import { IRenderVirtualListItemConfig } from '../models/render-item-config.model';
 import { Id, ISize } from '../types';
 import {
-    DEFAULT_ZINDEX,
-    HIDDEN_ZINDEX,
-    POSITION_ABSOLUTE, POSITION_STICKY, PX, SIZE_100_PERSENT, SIZE_AUTO, TRANSLATE_3D, VISIBILITY_HIDDEN,
-    VISIBILITY_VISIBLE, ZEROS_TRANSLATE_3D
+    DEFAULT_ZINDEX, HIDDEN_ZINDEX, POSITION_ABSOLUTE, POSITION_STICKY, PX, SIZE_100_PERSENT, SIZE_AUTO, TRANSLATE_3D, VISIBILITY_HIDDEN,
+    VISIBILITY_VISIBLE, ZEROS_TRANSLATE_3D,
 } from '../const';
-
-export type VirtualListItemRenderer = (data: { data: IVirtualListItem, config: IRenderVirtualListItemConfig }) => ReactNode;
-
-export interface VirtualListItemRefMethods {
-    getId: () => number;
-    setData: (data: IRenderVirtualListItem | undefined) => void;
-    setRenderer: (renderer: VirtualListItemRenderer) => void;
-    getElement: () => HTMLDivElement | null;
-    getBounds: () => ISize;
-    getItemId: () => Id | undefined;
-    show: () => void;
-    hide: () => void;
-}
-
 
 export interface IVirtualListItemProps { }
 
@@ -37,7 +20,7 @@ const DEFAULT_ITEM_RENDERER_FACTORY = () => <></>;
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
-export const VirtualListItem = forwardRef<VirtualListItemRefMethods, IVirtualListItemProps>(({ }, forwardedRef) => {
+export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListItemProps>(({ }, forwardedRef) => {
     const $elementRef = createRef<HTMLDivElement>();
     const $listItemRef = createRef<HTMLLIElement>();
     const [itemRenderer, setItemRenderer] = useState<VirtualListItemRenderer>(() => DEFAULT_ITEM_RENDERER_FACTORY);

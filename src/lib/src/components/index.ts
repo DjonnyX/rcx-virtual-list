@@ -1,6 +1,5 @@
-import { VirtualListItem, VirtualListItemRenderer } from './virtual-list-item';
+import { VirtualListItem } from './virtual-list-item';
 
 export {
-    VirtualListItem
+    VirtualListItem,
 };
-export type { VirtualListItemRenderer };
