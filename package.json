@@ -1,6 +1,6 @@
 {
   "name": "rcx-virtual-list",
-  "version": "1.0.0-beta-12",
+  "version": "1.0.0-beta-13",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -18,9 +18,11 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:prod": "set \"GENERATE_SOURCEMAP=false\" && react-scripts build",
+    "rmdir": "node -e \"var fs = require('fs');process.argv.slice(1).map((fpath)=>{ try {fs.rmdirSync(fpath,{recursive: true})} catch(e){console.warn('Error folder:', fpath, e)}});process.exit(0);\"",
+    "clean-lib-deps": "npm run rmdir -- ./src/lib/node_modules",
+    "start": "npm run clean-lib-deps && react-scripts start",
+    "build": "npm run clean-lib-deps && react-scripts build",
+    "build:prod": "npm run clean-lib-deps && set \"GENERATE_SOURCEMAP=false\" && react-scripts build",
     "build:lib": "cd ./src/lib && npm i && npm run build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
