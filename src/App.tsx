@@ -210,8 +210,8 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.0-beta-17</span></div>
-        <div className="version"><span>React v 16.x - v 19.x</span></div>
+        <div className="version"><span>v 1.0.0</span></div>
+        <div className="version"><span>React v 16.8.X - v 19.X.X</span></div>
       </div>
 
       <div className="vl-section">
