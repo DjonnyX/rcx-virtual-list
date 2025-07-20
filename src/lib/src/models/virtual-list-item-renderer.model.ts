@@ -1,6 +1,11 @@
-import { ReactNode } from "react";
+import React from "react";
 import { IVirtualListItem } from "./item.model";
 import { IRenderVirtualListItemConfig } from "./render-item-config.model";
+
+interface IProps {
+    data: IVirtualListItem;
+    config: IRenderVirtualListItemConfig;
+}
 
 /**
  * Virtualized list element factory
@@ -8,4 +13,4 @@ import { IRenderVirtualListItemConfig } from "./render-item-config.model";
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
-export type VirtualListItemRenderer = (data: { data: IVirtualListItem, config: IRenderVirtualListItemConfig }) => ReactNode;
+export type VirtualListItemRenderer = React.FC<IProps>;

@@ -1,4 +1,4 @@
-import React, { createRef, forwardRef, useCallback, useImperativeHandle, useState } from 'react';
+import React, { createRef, forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { IVirtualListItemMethods, VirtualListItemRenderer } from '../models';
 import { IRenderVirtualListItem } from '../models/render-item.model';
 import { Id, ISize } from '../types';
@@ -26,7 +26,7 @@ const DEFAULT_ITEM_RENDERER_FACTORY = () => <></>;
 export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListItemProps>(({ regular = false, renderer = DEFAULT_ITEM_RENDERER_FACTORY }, forwardedRef) => {
     const $elementRef = createRef<HTMLDivElement>();
     const $listItemRef = createRef<HTMLLIElement>();
-    const [itemRenderer, setItemRenderer] = useState<VirtualListItemRenderer>(() => renderer);
+    const itemRenderer = useRef<any>(renderer);
     const [_id] = useState(() => {
         return __nextId = __nextId === Number.MAX_SAFE_INTEGER ? 0 : __nextId + 1;
     });
@@ -129,7 +129,7 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
             update();
         },
         setRenderer: (renderer: VirtualListItemRenderer) => {
-            setItemRenderer(() => renderer);
+            itemRenderer.current = renderer;
         },
         getBounds: (): ISize => {
             const element = $elementRef.current,
@@ -162,10 +162,7 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
         {
             _data &&
             <li ref={$listItemRef} className={classNames(_data)}>
-                {
-                    typeof itemRenderer !== undefined && itemRenderer({ data: _data.data || {}, config: _data.config })
-
-                }
+                {(itemRenderer.current !== undefined || itemRenderer.current !== null) && <itemRenderer.current data={_data?.data!} config={_data?.config!}/>}
             </li>
         }
     </div>

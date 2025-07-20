@@ -93,25 +93,25 @@ for (let i = 0, l = 100000; i < l; i++) {
   GROUP_DYNAMIC_ITEMS_STICKY_MAP_WITH_SNAP[id] = type === 'group-header' ? 1 : 0;
 }
 
-const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
-    return;
+    return null;
   }
 
   return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
-};
+});
 
-const horizontalItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const horizontalItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
-    return;
+    return null;
   }
 
   return <div className="list__h-container" onClick={onItemClick(data)}>{data?.name}</div>
-};
+});
 
-const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
-    return;
+    return null;
   }
 
   switch (data['type']) {
@@ -122,11 +122,12 @@ const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem
       return <div className="list__h-container" onClick={onItemClick(data)}>{data?.name}</div>
     }
   }
-};
+  return null;
+});
 
-const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
-    return;
+    return null;
   }
 
   switch (data['type']) {
@@ -137,7 +138,9 @@ const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any):
       return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
     }
   }
-};
+
+  return null;
+});
 
 function App() {
   const [verticalItems] = useState([...ITEMS]);
@@ -211,7 +214,7 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.2</span></div>
+        <div className="version"><span>v 1.0.4</span></div>
         <div className="version"><span>React v 16.8.X - v 19.X.X</span></div>
       </div>
 

@@ -1,6 +1,6 @@
 # RcxVirtualList
 
-Maximum performance for extremely large lists.
+Maximum performance for extremely large lists.<br/>
 Animation of elements is supported.
 
 [Beta version]
