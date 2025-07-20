@@ -210,7 +210,7 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.0-beta-14</span></div>
+        <div className="version"><span>v 1.0.0-beta-15</span></div>
         <div className="version"><span>React v 16.x - v 19.x</span></div>
       </div>
 
@@ -276,7 +276,7 @@ function App() {
             <button className="scroll-to__button" onClick={onButtonScrollDLToIdClickHandler}>Scroll</button>
           </div>
           <VirtualList ref={$listContainerRef1} className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory(onItemClick)}
-            itemsOffset={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} snappingMethod={'advanced'} />
+            itemsOffset={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
         </div>
       </div >
 

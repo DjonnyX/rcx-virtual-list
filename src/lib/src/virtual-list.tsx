@@ -160,7 +160,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
                 snappedComponent.setRegularLength(`${isVertical ? listBounds.width : listBounds.height}${PX}`);
                 const { width: sWidth, height: sHeight } = snappedComponent.getBounds() ?? { width: 0, height: 0 },
-                    containerElement = snappedComponent.getElement();
+                    containerElement = container.current;
 
                 if (containerElement) {
                     let left: number, right: number, top: number, bottom: number;
