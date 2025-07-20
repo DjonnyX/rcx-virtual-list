@@ -1,4 +1,5 @@
 .rcxvl {
+    position: relative;
     display: block;
     width: 400px;
     overflow: hidden;
@@ -12,7 +13,16 @@
     height: 320px;
 }
 
-.rcxvl__container {
+.rcxvl__list-snapper {
+    pointer-events: none;
+    position: absolute;
+    list-style: none;
+    left: 0;
+    top: 0;
+    z-index: 1;
+}
+
+.rcxvl__scroller {
     overflow: auto;
     width: 100%;
     height: 100%;

@@ -408,6 +408,13 @@ List items are encapsulated in shadowDOM, so to override default styles you need
 }
 ```
 
+- Set up the snapped item (Only SnappingMethod.ADVANCED)
+```css
+.list .rcxvl__snapped-item {
+    color: #71718c;
+}
+```
+
 - Set up the list item
 ```css
 .list .rcxvl__item {
@@ -430,6 +437,7 @@ Inputs
 | itemRenderer | [VirtualListItemRenderer](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/virtual-list-item-renderer.model.ts) | Rendering element factory. |
 | stickyMap | [IVirtualListStickyMap?](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/sticky-map.model.ts) | Dictionary zIndex by id of the list element. If the value is not set or equal to 0, then a simple element is displayed, if the value is greater than 0, then the sticky position mode is enabled for the element. |
 | snap | boolean? = false | Determines whether elements will snap. Default value is "false". |
+| snappingMethod | [SnappingMethod? = 'normal'](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/enums/snapping-method.ts) | Snapping method. 'normal' - Normal group rendering. 'advanced' - The group is rendered on a transparent background. List items below the group are not rendered. |
 | direction | [Direction? = 'vertical'](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/enums/direction.ts) | Determines the direction in which elements are placed. Default value is "vertical". |
 | dynamicSize | boolean? = false | If true then the items in the list can have different sizes and the itemSize property is ignored. If false then the items in the list have a fixed size specified by the itemSize property. The default value is false. |
 | enabledBufferOptimization | boolean? = true | Experimental! Enables buffer optimization. Can only be used if items in the collection are not added or updated. |

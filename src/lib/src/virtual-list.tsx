@@ -5,31 +5,81 @@ import {
 } from './models';
 import {
     BEHAVIOR_AUTO, BEHAVIOR_INSTANT, CLASS_LIST_HORIZONTAL, CLASS_LIST_VERTICAL, DEFAULT_DIRECTION, DEFAULT_DYNAMIC_SIZE,
-    DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_ITEMS_OFFSET, DEFAULT_LIST_SIZE, DEFAULT_SNAP, HEIGHT_PROP_NAME,
+    DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_ITEMS_OFFSET, DEFAULT_LIST_SIZE, DEFAULT_SNAP, DEFAULT_SNAPPING_METHOD, HEIGHT_PROP_NAME,
     LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME, TRACK_BY_PROPERTY_NAME, WIDTH_PROP_NAME,
 } from './const';
 import { isDirection, ScrollEvent, toggleClassName, TrackBox } from './utils';
-import { Direction, Directions } from './enums';
+import { Direction, Directions, SnappingMethod } from './enums';
 import { VirtualListItem } from './components';
 import { IGetItemPositionOptions, IUpdateCollectionOptions, TRACK_BOX_CHANGE_EVENT_NAME } from './utils/trackBox';
 import { IRenderVirtualListCollection } from './models/render-collection.model';
 import { useDebounce } from './utils/debounce';
 import { Id } from './types/id';
 import { ISize } from './types/size';
+import { FIREFOX_SCROLLBAR_OVERLAP_SIZE, IS_FIREFOX } from './utils/browser';
+import { isSnappingMethodAdvenced } from './utils/snapping-method';
 
 export interface IVirtualListProps {
     className?: string;
+    /**
+     * Determines the direction in which elements are placed. Default value is "vertical".
+     */
     direction?: Direction;
+    /**
+     * If true then the items in the list can have different sizes and the itemSize property is ignored.
+     * If false then the items in the list have a fixed size specified by the itemSize property. The default value is false.
+     */
     dynamicSize?: boolean;
+    /**
+     * Experimental!
+     * Enables buffer optimization.
+     * Can only be used if items in the collection are not added or updated. Otherwise, artifacts in the form of twitching of the scroll area are possible.
+     * Works only if the property dynamic = true
+     */
     enabledBufferOptimization?: boolean;
+    /**
+     * Rendering element template.
+     */
     itemRenderer: VirtualListItemRenderer;
+    /**
+     * Collection of list items.
+     */
     items: IVirtualListCollection | undefined;
+    /**
+     * Number of elements outside the scope of visibility. Default value is 2.
+     */
     itemsOffset?: number;
+    /**
+     * If direction = 'vertical', then the height of a typical element. If direction = 'horizontal', then the width of a typical element.
+     * Ignored if the dynamicSize property is true.
+     */
     itemSize?: number;
+    /**
+     * Determines whether elements will snap. Default value is "true".
+     */
     snap?: boolean;
+    /**
+     * Snapping method.
+     * 'default' - Normal group rendering.
+     * 'advanced' - The group is rendered on a transparent background. List items below the group are not rendered.
+     */
+    snappingMethod?: SnappingMethod;
+    /**
+     * Dictionary zIndex by id of the list element. If the value is not set or equal to 0,
+     * then a simple element is displayed, if the value is greater than 0, then the sticky position mode is enabled for the element.
+     */
     stickyMap?: IVirtualListStickyMap;
+    /**
+     * The name of the property by which tracking is performed
+     */
     trackBy?: string;
+    /**
+     * Fires when the list has been scrolled.
+     */
     onScroll?: (e: IScrollEvent) => void;
+    /**
+     * Fires when the list has completed scrolling.
+     */
     onScrollEnd?: (e: IScrollEvent) => void;
 }
 
@@ -46,11 +96,12 @@ let __nextId: number = 0;
 export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     direction = DEFAULT_DIRECTION, dynamicSize = DEFAULT_DYNAMIC_SIZE, enabledBufferOptimization = DEFAULT_ENABLED_BUFFER_OPTIMIZATION,
     itemsOffset: _itemOffset = DEFAULT_ITEMS_OFFSET, itemRenderer, items, itemSize: _itemSize = DEFAULT_ITEM_SIZE, snap = DEFAULT_SNAP,
-    stickyMap: _stickyMap = {}, trackBy = TRACK_BY_PROPERTY_NAME, className,
+    snappingMethod = DEFAULT_SNAPPING_METHOD, stickyMap: _stickyMap = {}, trackBy = TRACK_BY_PROPERTY_NAME, className,
     onScroll, onScrollEnd,
 }: IVirtualListProps, forwardedRef) => {
     const $elementRef = useRef<HTMLDivElement>(null);
     const $containerRef = useRef<HTMLDivElement>(null);
+    const $snappedRef = useRef<HTMLDivElement>(null);
     const $listRef = useRef<HTMLUListElement>(null);
     const [_id] = useState<number>(() => {
         __nextId = __nextId + 1 === Number.MAX_SAFE_INTEGER ? 0 : __nextId + 1;
@@ -59,6 +110,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     const _trackBox = useRef(new TrackBox(trackBy));
     const _isStopJumpingScroll = useRef<boolean>(false);
     const _displayComponents = useRef<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
+    const _snapedDisplayComponent = useRef<IVirtualListItemMethods | null>(null);
+    const _resizeSnappedObserver = useRef<ResizeObserver | null>(null);
     const [_displayComponentsList, _setDisplayComponentsList] = useState<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
     const [_bounds, _setBounds] = useState<ISize | null>(null);
     const [_scrollSize, _setScrollSize] = useState<number>(0);
@@ -66,9 +119,12 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     const [_initialized, _setInitialized] = useState<boolean>(false);
     const [_cacheVersion, _setCacheVersion] = useState<number>(-1);
 
-    const displayObjects = useMemo(() => {
-        return _displayComponentsList.map((ref, index) => <VirtualListItem ref={ref} key={String(index)} />);
-    }, [_displayComponentsList]);
+    const getIsSnappingMethodAdvanced = useCallback((m?: SnappingMethod) => {
+        const method = m || snappingMethod;
+        return isSnappingMethodAdvenced(method);
+    }, [snappingMethod]);
+
+    const _isSnappingMethodAdvanced = useRef<boolean>(getIsSnappingMethodAdvanced());
 
     const getIsVertical = useCallback((d?: Direction) => {
         const dir = d || direction;
@@ -81,13 +137,68 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     }));
     const _scrollToRepeatExecutionTimeout = useRef<any>(undefined);
 
+    const updateRegularRenderer = useRef(() => {
+        const list = $listRef, container = $containerRef, snappedComponent = _snapedDisplayComponent?.current;
+        if (list && list.current && container && container.current && snappedComponent) {
+            const isVertical = _isVertical, listBounds = list.current.getBoundingClientRect(), listElement = list?.current,
+                { width: lWidth, height: lHeight } = listElement?.getBoundingClientRect() ?? { width: 0, height: 0 },
+                { width, height } = container.current?.getBoundingClientRect() ?? { width: 0, height: 0 },
+                isScrollable = isVertical ? container.current.scrollHeight > 0 : container.current.scrollWidth > 0;
+
+            let scrollBarSize = isVertical ? width - lWidth : height - lHeight, isScrollBarOverlap = true, overlapScrollBarSize = 0;
+            if (scrollBarSize === 0 && isScrollable) {
+                isScrollBarOverlap = true;
+            }
+
+            if (isScrollBarOverlap && IS_FIREFOX) {
+                scrollBarSize = overlapScrollBarSize = FIREFOX_SCROLLBAR_OVERLAP_SIZE;
+            }
+
+            const element = snappedComponent.getElement();
+            if (element) {
+                element.style.clipPath = `path("M 0 0 L 0 ${element.offsetHeight} L ${element.offsetWidth - overlapScrollBarSize} ${element.offsetHeight} L ${element.offsetWidth - overlapScrollBarSize} 0 Z")`;
+
+                snappedComponent.setRegularLength(`${isVertical ? listBounds.width : listBounds.height}${PX}`);
+                const { width: sWidth, height: sHeight } = snappedComponent.getBounds() ?? { width: 0, height: 0 },
+                    containerElement = snappedComponent.getElement();
+
+                if (containerElement) {
+                    let left: number, right: number, top: number, bottom: number;
+                    if (isVertical) {
+                        const delta = snappedComponent.getData()?.measures.delta ?? 0;
+                        left = 0;
+                        right = width - scrollBarSize;
+                        top = sHeight;
+                        bottom = height;
+                        containerElement.style.clipPath = `path("M 0 ${top + delta} L 0 ${height} L ${width} ${height} L ${width} 0 L ${right} 0 L ${right} ${top + delta} Z")`;
+                    } else {
+                        const delta = snappedComponent.getData()?.measures.delta ?? 0;
+                        left = sWidth;
+                        right = width;
+                        top = 0;
+                        bottom = height - scrollBarSize;
+                        containerElement.style.clipPath = `path("M ${left + delta} 0 L ${left + delta} ${bottom} L 0 ${bottom} L 0 ${height} L ${width} ${height} L ${width} 0 Z")`;
+                    }
+                }
+            }
+        }
+    });
+
+    useEffect(() => {
+        const snappedDisplayComponentref = _snapedDisplayComponent.current;
+        _trackBox.current.snapedDisplayComponent = _snapedDisplayComponent;
+        if (snappedDisplayComponentref && snappedDisplayComponentref && !_resizeSnappedObserver.current) {
+            const element = snappedDisplayComponentref?.getElement();
+            if (element) {
+                _resizeSnappedObserver.current = new ResizeObserver(updateRegularRenderer.current);
+                _resizeSnappedObserver.current.observe(element);
+            }
+        }
+    }, [_snapedDisplayComponent, _resizeSnappedObserver, updateRegularRenderer]);
+
     const _onTrackBoxChangeHandler = useRef((v: number) => {
         _setCacheVersion(v);
     });
-
-    const mountedDisplayObjects = useMemo(() => {
-        return displayObjects.length;
-    }, [displayObjects]);
 
     useEffect(() => {
         _setInitialized(true);
@@ -157,6 +268,10 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             _setBounds({ width, height });
         } else {
             _setBounds({ width: DEFAULT_LIST_SIZE, height: DEFAULT_LIST_SIZE });
+        }
+
+        if (_isSnappingMethodAdvanced.current) {
+            updateRegularRenderer.current();
         }
     });
 
@@ -311,12 +426,6 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         _resizeObserveQueue.current.push(ref);
     });
 
-    useEffect(() => {
-        if (mountedDisplayObjects) {
-            executeResizeObserverQueue();
-        }
-    }, [mountedDisplayObjects, executeResizeObserverQueue]);
-
     const createDisplayComponentsIfNeed = useCallback((displayItems: IRenderVirtualListCollection | null) => {
         if (!displayItems || !$listRef) {
             _trackBox.current.setDisplayObjectIndexMapById({});
@@ -469,6 +578,24 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
     }, [_initialized, itemRenderer, resetRenderers]);
 
+    const displayObjects = useMemo(() => {
+        return _displayComponentsList.map((ref, index) => <VirtualListItem ref={ref} key={String(index)} />);
+    }, [_displayComponentsList]);
+
+    const snappedObject = useMemo(() => {
+        return <VirtualListItem ref={_snapedDisplayComponent} regular={true} renderer={itemRenderer} />
+    }, [_snapedDisplayComponent, itemRenderer]);
+
+    const mountedDisplayObjects = useMemo(() => {
+        return displayObjects.length;
+    }, [displayObjects]);
+
+    useEffect(() => {
+        if (mountedDisplayObjects) {
+            executeResizeObserverQueue();
+        }
+    }, [mountedDisplayObjects, executeResizeObserverQueue]);
+
     useEffect(() => {
         if (_initialized && _bounds && items) {
             const { width, height } = _bounds, scrollSize = (_isVertical.current ? $containerRef?.current?.scrollTop ?? 0 : $containerRef?.current?.scrollLeft) ?? 0;
@@ -484,6 +611,10 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             createDisplayComponentsIfNeed(displayItems);
 
             tracking();
+
+            if (_isSnappingMethodAdvanced.current) {
+                updateRegularRenderer.current();
+            }
 
             if (!_isStopJumpingScroll.current) {
                 const container = $containerRef;
@@ -505,7 +636,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
     }, [mountedDisplayObjects, $containerRef, _bounds, items, stickyMap, _scrollSize, itemSize, _trackBox,
         itemsOffset, snap, isVertical, dynamicSize, enabledBufferOptimization, _cacheVersion,
-        _isStopJumpingScroll.current, resetBoundsSize, createDisplayComponentsIfNeed, tracking,
+        _isStopJumpingScroll.current, resetBoundsSize, createDisplayComponentsIfNeed, tracking, updateRegularRenderer,
     ]);
 
     useEffect(() => {
@@ -565,7 +696,13 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     }));
 
     return <div ref={$elementRef} className={`rcxvl ${className}`}>
-        <div ref={$containerRef} className="rcxvl__container rcxvl__scroller">
+        {
+            snap && _isSnappingMethodAdvanced.current &&
+            <div ref={$snappedRef} className="rcxvl__list-snapper snapped-item">
+                {snappedObject}
+            </div>
+        }
+        <div ref={$containerRef} className="rcxvl__scroller">
             <ul ref={$listRef} className="rcxvl__list">
                 {displayObjects}
             </ul>

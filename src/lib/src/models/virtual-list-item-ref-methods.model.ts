@@ -11,7 +11,10 @@ import { VirtualListItemRenderer } from "./virtual-list-item-renderer.model";
 export interface IVirtualListItemMethods {
     getId: () => number;
     setData: (data: IRenderVirtualListItem | undefined) => void;
+    getData: () => IRenderVirtualListItem | undefined;
     setRenderer: (renderer: VirtualListItemRenderer) => void;
+    setRegular: (value: boolean) => void;
+    setRegularLength: (length: string) => void;
     getElement: () => HTMLDivElement | null;
     getBounds: () => ISize;
     getItemId: () => Id | undefined;
