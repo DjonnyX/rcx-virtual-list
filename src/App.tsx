@@ -207,10 +207,11 @@ function App() {
       <div className="vl-section block cap">
         <h1 className="center">rcx-virtual-list</h1>
         <p className="l">Maximum performance for extremely large lists</p>
+        <p className="l">Animation of elements is supported.</p>
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.1</span></div>
+        <div className="version"><span>v 1.0.2</span></div>
         <div className="version"><span>React v 16.8.X - v 19.X.X</span></div>
       </div>
 
