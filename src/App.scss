@@ -172,9 +172,14 @@ input {
     border: 1px solid #383844;
     background-color: #0f0f11;
 
+    .snapped-item {
+        color: #71718c;
+    }
+
     .rcxvl__scroller {
         scroll-behavior: auto;
         color: #71718c;
+        background-color: #1a1a1e;
 
         /* custom scrollbar */
         &::-webkit-scrollbar {
@@ -249,7 +254,7 @@ input {
         justify-content: center;
 
         &:hover {
-            background-color: #24242b;
+            background-color: #17171b;
         }
 
         &>* {

@@ -56,13 +56,14 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
     /**
      * tracking by propName
      */
-    track(items: Array<any>, components: Array<React.RefObject<C>>,
+    track(items: Array<any>, components: Array<React.RefObject<C>>, snapedComponent: React.RefObject<C> | null | undefined,
         direction: ScrollDirection): void {
         if (!items) {
             return;
         }
 
         const idPropName = this._trackingPropertyName, untrackedItems = [...components], isDown = direction === 0 || direction === 1;
+        let isRegularSnapped = false;
 
         for (let i = isDown ? 0 : items.length - 1, l = isDown ? items.length : 0; isDown ? i < l : i >= l; isDown ? i++ : i--) {
             const item = items[i], itemTrackingProperty = item[idPropName];
@@ -70,18 +71,23 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
             if (this._trackMap) {
                 if (this._trackMap.hasOwnProperty(itemTrackingProperty)) {
                     const diId = this._trackMap[itemTrackingProperty],
-                        compIndex = this._displayObjectIndexMapById[diId], ref = components[compIndex];
+                        compIndex = this._displayObjectIndexMapById[diId], comp = components[compIndex];
 
-                    const compId = ref?.current?.id;
-                    if (ref !== undefined && compId === diId) {
-                        const indexByUntrackedItems = untrackedItems.findIndex((ref) => {
-                            return ref.current.id === compId;
+                    const compId = comp?.current?.id;
+                    if (comp !== undefined && compId === diId) {
+                        const indexByUntrackedItems = untrackedItems.findIndex(v => {
+                            return v.current.id === compId;
                         });
                         if (indexByUntrackedItems > -1) {
-                            if (ref.current) {
-                                ref.current.setData(item);
-                                ref.current.show();
+                            if (snapedComponent) {
+                                if (item['config']['snapped'] || item['config']['snappedOut']) {
+                                    isRegularSnapped = true;
+                                    snapedComponent.current.setData(item);
+                                    snapedComponent.current.show();
+                                }
                             }
+                            comp.current.setData(item);
+                            comp.current.show();
                             untrackedItems.splice(indexByUntrackedItems, 1);
                             continue;
                         }
@@ -91,16 +97,20 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
             }
 
             if (untrackedItems.length > 0) {
-                const el = untrackedItems.shift(), item = items[i];
-                if (el) {
-                    const ref = el;
-                    if (ref.current) {
-                        ref.current.setData(item);
-                        ref.current.show();
-
-                        if (this._trackMap) {
-                            this._trackMap[itemTrackingProperty] = ref.current.id;
+                const comp = untrackedItems.shift(), item = items[i];
+                if (comp && comp.current) {
+                    if (snapedComponent && snapedComponent.current) {
+                        if (item['config']['snapped'] || item['config']['snappedOut']) {
+                            isRegularSnapped = true;
+                            snapedComponent.current.setData(item);
+                            snapedComponent.current.show();
                         }
+                    }
+                    comp.current.setData(item);
+                    comp.current.show();
+
+                    if (this._trackMap) {
+                        this._trackMap[itemTrackingProperty] = comp.current.id;
                     }
                 }
             }
@@ -108,10 +118,17 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
 
         if (untrackedItems.length) {
             for (let i = 0, l = untrackedItems.length; i < l; i++) {
-                const ref = untrackedItems[i];
-                if (ref && ref.current) {
-                    ref.current.hide();
+                const comp = untrackedItems[i];
+                if (comp && comp.current) {
+                    comp.current.hide();
                 }
+            }
+        }
+
+        if (!isRegularSnapped) {
+            if (snapedComponent && snapedComponent.current) {
+                snapedComponent.current.setData(null);
+                snapedComponent.current.hide();
             }
         }
     }
