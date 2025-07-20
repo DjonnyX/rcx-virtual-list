@@ -1,4 +1,4 @@
-import React, { createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
     IScrollEvent, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap, IVirtualListItemMethods,
     VirtualListItemRenderer, IVirtualListMethods,
@@ -596,7 +596,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
     }, [mountedDisplayObjects, executeResizeObserverQueue]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (_initialized && _bounds && items) {
             const { width, height } = _bounds, scrollSize = (_isVertical.current ? $containerRef?.current?.scrollTop ?? 0 : $containerRef?.current?.scrollLeft) ?? 0;
             let actualScrollSize = scrollSize;
