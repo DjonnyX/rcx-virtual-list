@@ -1,4 +1,4 @@
-import React, { createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
     IScrollEvent, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap, IVirtualListItemMethods,
     VirtualListItemRenderer, IVirtualListMethods,
@@ -345,7 +345,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useEffect(() => {
         _onResizeHandler.current();
-    }, []);
+    }, [_onResizeHandler]);
 
     useEffect(() => {
         if ($containerRef && $containerRef.current) {
@@ -384,7 +384,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         debouncedResetCollection.execute(_trackBox, items, itemSize);
     }, [_trackBox, items, itemSize]);
 
-    const resetRenderers = useCallback((renderer?: VirtualListItemRenderer) => {
+    const resetRenderers = useRef((renderer?: VirtualListItemRenderer) => {
         const doMap: { [id: number]: number } = {}, components = _displayComponents.current;
         for (let i = 0, l = components.length; i < l; i++) {
             const item = components[i], ref = item, component = ref.current;
@@ -396,7 +396,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
 
         _trackBox.current.setDisplayObjectIndexMapById(doMap);
-    }, [_trackBox, _displayComponents, itemRenderer]);
+    });
 
     const _resizeObserveQueue = useRef<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
 
@@ -426,7 +426,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         _resizeObserveQueue.current.push(ref);
     });
 
-    const createDisplayComponentsIfNeed = useCallback((displayItems: IRenderVirtualListCollection | null) => {
+    const createDisplayComponentsIfNeed = useRef((displayItems: IRenderVirtualListCollection | null) => {
         if (!displayItems || !$listRef) {
             _trackBox.current.setDisplayObjectIndexMapById({});
             return;
@@ -455,22 +455,22 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             _setDisplayComponentsList([...components]);
         }
 
-        resetRenderers();
-    }, [$listRef, _trackBox, _displayComponents, resetRenderers, waitToResizeObserve]);
+        resetRenderers.current();
+    });
 
     /**
      * Tracking by id
      */
-    const tracking = useCallback(() => {
+    const tracking = useRef(() => {
         _trackBox.current.track();
-    }, [_trackBox]);
+    });
 
-    const resetBoundsSize = useCallback((isVertical: boolean, totalSize: number) => {
+    const resetBoundsSize = useRef((isVertical: boolean, totalSize: number) => {
         const l = $listRef;
         if (l && l.current) {
             l.current.style[isVertical ? HEIGHT_PROP_NAME : WIDTH_PROP_NAME] = `${totalSize}${PX}`;
         }
-    }, [$listRef]);
+    });
 
     /**
      * Returns the bounds of an element with a given id
@@ -513,11 +513,11 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
                     let actualScrollSize = scrollSize + delta;
 
-                    resetBoundsSize(isVertical, totalSize);
+                    resetBoundsSize.current(isVertical, totalSize);
 
-                    createDisplayComponentsIfNeed(displayItems);
+                    createDisplayComponentsIfNeed.current(displayItems);
 
-                    tracking();
+                    tracking.current();
 
                     const _scrollSize = _trackBox.current.getItemPosition(id, stickyMap, { ...opts, scrollSize: actualScrollSize, fromItemId: id }),
                         notChanged = actualScrollSize === _scrollSize;
@@ -574,7 +574,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useEffect(() => {
         if (_initialized) {
-            resetRenderers(itemRenderer);
+            resetRenderers.current(itemRenderer);
         }
     }, [_initialized, itemRenderer, resetRenderers]);
 
@@ -596,7 +596,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
     }, [mountedDisplayObjects, executeResizeObserverQueue]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (_initialized && _bounds && items) {
             const { width, height } = _bounds, scrollSize = (_isVertical.current ? $containerRef?.current?.scrollTop ?? 0 : $containerRef?.current?.scrollLeft) ?? 0;
             let actualScrollSize = scrollSize;
@@ -606,11 +606,11 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             };
             const { displayItems, totalSize } = _trackBox.current.updateCollection(items, stickyMap, opts);
 
-            resetBoundsSize(isVertical, totalSize);
+            resetBoundsSize.current(isVertical, totalSize);
 
-            createDisplayComponentsIfNeed(displayItems);
+            createDisplayComponentsIfNeed.current(displayItems);
 
-            tracking();
+            tracking.current();
 
             if (_isSnappingMethodAdvanced.current) {
                 updateRegularRenderer.current();
