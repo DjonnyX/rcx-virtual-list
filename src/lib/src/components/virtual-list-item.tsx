@@ -26,7 +26,7 @@ const DEFAULT_ITEM_RENDERER_FACTORY = () => <></>;
 export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListItemProps>(({ regular = false, renderer = DEFAULT_ITEM_RENDERER_FACTORY }, forwardedRef) => {
     const $elementRef = createRef<HTMLDivElement>();
     const $listItemRef = createRef<HTMLLIElement>();
-    const itemRenderer = useRef<any>(renderer);
+    const [itemRenderer, setItemRenderer] = useState<{ renderer: VirtualListItemRenderer }>({ renderer });
     const [_id] = useState(() => {
         return __nextId = __nextId === Number.MAX_SAFE_INTEGER ? 0 : __nextId + 1;
     });
@@ -129,7 +129,7 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
             update();
         },
         setRenderer: (renderer: VirtualListItemRenderer) => {
-            itemRenderer.current = renderer;
+            setItemRenderer({ renderer });
         },
         getBounds: (): ISize => {
             const element = $elementRef.current,
@@ -158,11 +158,13 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
         return result.join(' ');
     }, []);
 
+    const content = (itemRenderer !== undefined || itemRenderer !== null) && <itemRenderer.renderer data={_data?.data!} config={_data?.config!} />
+
     return <div ref={$elementRef} className='rcxvl__item'>
         {
             _data &&
             <li ref={$listItemRef} className={classNames(_data)}>
-                {(itemRenderer.current !== undefined || itemRenderer.current !== null) && <itemRenderer.current data={_data?.data!} config={_data?.config!}/>}
+                {content}
             </li>
         }
     </div>
