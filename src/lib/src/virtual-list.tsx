@@ -384,13 +384,12 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         debouncedResetCollection.execute(_trackBox, items, itemSize);
     }, [_trackBox, items, itemSize]);
 
-    const resetRenderers = useRef((renderer?: VirtualListItemRenderer) => {
+    const resetRenderers = useRef(() => {
         const doMap: { [id: number]: number } = {}, components = _displayComponents.current;
         for (let i = 0, l = components.length; i < l; i++) {
             const item = components[i], ref = item, component = ref.current;
             if (component) {
                 const id = component.getId();
-                component.setRenderer(renderer ?? itemRenderer);
                 doMap[id] = i;
             }
         }
@@ -574,13 +573,13 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useEffect(() => {
         if (_initialized) {
-            resetRenderers.current(itemRenderer);
+            resetRenderers.current();
         }
-    }, [_initialized, itemRenderer, resetRenderers]);
+    }, [_initialized, resetRenderers]);
 
     const displayObjects = useMemo(() => {
-        return _displayComponentsList.map((ref, index) => <VirtualListItem ref={ref} key={String(index)} />);
-    }, [_displayComponentsList]);
+        return _displayComponentsList.map((ref, index) => <VirtualListItem ref={ref} key={String(index)} renderer={itemRenderer} />);
+    }, [_displayComponentsList, itemRenderer]);
 
     const snappedObject = useMemo(() => {
         return <VirtualListItem ref={_snapedDisplayComponent} regular={true} renderer={itemRenderer} />
@@ -635,7 +634,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             }
         }
     }, [mountedDisplayObjects, $containerRef, _bounds, items, stickyMap, _scrollSize, itemSize, _trackBox,
-        itemsOffset, snap, isVertical, dynamicSize, enabledBufferOptimization, _cacheVersion,
+        itemsOffset, snap, isVertical, dynamicSize, enabledBufferOptimization, _cacheVersion, itemRenderer,
         _isStopJumpingScroll.current, resetBoundsSize, createDisplayComponentsIfNeed, tracking, updateRegularRenderer,
     ]);
 

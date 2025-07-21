@@ -1,6 +1,6 @@
 {
   "name": "rcx-virtual-list",
-  "version": "1.0.4",
+  "version": "1.0.4-alpha-2",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
