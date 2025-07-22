@@ -4,3 +4,4 @@ export {
 };
 export * from './models';
 export * from './types';
+export default VirtualList;
