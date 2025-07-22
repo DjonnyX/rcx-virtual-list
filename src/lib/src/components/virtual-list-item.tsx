@@ -1,4 +1,4 @@
-import React, { createRef, forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { createRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { IVirtualListItemMethods, VirtualListItemRenderer } from '../models';
 import { IRenderVirtualListItem } from '../models/render-item.model';
 import { Id, ISize } from '../types';
@@ -33,6 +33,10 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
     const [_data, _setData] = useState<IRenderVirtualListItem | undefined>();
     const [_regular, _setRegular] = useState<boolean>(regular);
     const [_regularLength, _setRegularLength] = useState<string>(SIZE_100_PERSENT);
+
+    useEffect(() => {
+        setItemRenderer({ renderer: renderer ?? DEFAULT_ITEM_RENDERER_FACTORY });
+    }, [renderer]);
 
     const setDataTransform = useCallback((data?: IRenderVirtualListItem | undefined) => {
         const result = data ?? _data;
@@ -145,7 +149,7 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
         hide: (): void => {
             hide();
         },
-    }));
+    }), [$elementRef, _data, _id, itemRenderer]);
 
     const classNames = useCallback((data: IRenderVirtualListItem, ...classes: Array<string>) => {
         const result = ['rcxvl__item-container', ...(classes ?? [])];

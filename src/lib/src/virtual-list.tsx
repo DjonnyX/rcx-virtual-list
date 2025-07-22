@@ -1,12 +1,16 @@
-import React, { createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+    createRef, forwardRef, RefObject, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo,
+    useRef, useState,
+} from 'react';
 import {
     IScrollEvent, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap, IVirtualListItemMethods,
     VirtualListItemRenderer, IVirtualListMethods,
 } from './models';
 import {
     BEHAVIOR_AUTO, BEHAVIOR_INSTANT, CLASS_LIST_HORIZONTAL, CLASS_LIST_VERTICAL, DEFAULT_DIRECTION, DEFAULT_DYNAMIC_SIZE,
-    DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_ITEMS_OFFSET, DEFAULT_LIST_SIZE, DEFAULT_SNAP, DEFAULT_SNAPPING_METHOD, HEIGHT_PROP_NAME,
-    LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME, TRACK_BY_PROPERTY_NAME, WIDTH_PROP_NAME,
+    DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_ITEMS_OFFSET, DEFAULT_LIST_SIZE, DEFAULT_SNAP,
+    DEFAULT_SNAPPING_METHOD, HEIGHT_PROP_NAME, LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME,
+    TRACK_BY_PROPERTY_NAME, WIDTH_PROP_NAME,
 } from './const';
 import { isDirection, ScrollEvent, toggleClassName, TrackBox } from './utils';
 import { Direction, Directions, SnappingMethod } from './enums';
@@ -18,6 +22,7 @@ import { Id } from './types/id';
 import { ISize } from './types/size';
 import { FIREFOX_SCROLLBAR_OVERLAP_SIZE, IS_FIREFOX } from './utils/browser';
 import { isSnappingMethodAdvenced } from './utils/snapping-method';
+import { useInitialize } from './utils/useInitialize';
 
 export interface IVirtualListProps {
     className?: string;
@@ -116,8 +121,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     const [_bounds, _setBounds] = useState<ISize | null>(null);
     const [_scrollSize, _setScrollSize] = useState<number>(0);
     const _resizeObserver = useRef<ResizeObserver | null>(null);
-    const [_initialized, _setInitialized] = useState<boolean>(false);
     const [_cacheVersion, _setCacheVersion] = useState<number>(-1);
+    const _initialized = useInitialize();
 
     const getIsSnappingMethodAdvanced = useCallback((m?: SnappingMethod) => {
         const method = m || snappingMethod;
@@ -132,7 +137,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     }, [direction]);
 
     const _isVertical = useRef<boolean>(getIsVertical());
-    const [_componentsResizeObserver] = useState<ResizeObserver>(new ResizeObserver(() => {
+    const _componentsResizeObserver = useRef<ResizeObserver>(new ResizeObserver(() => {
         _trackBox.current.changes();
     }));
     const _scrollToRepeatExecutionTimeout = useRef<any>(undefined);
@@ -156,7 +161,8 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
             const element = snappedComponent.getElement();
             if (element) {
-                element.style.clipPath = `path("M 0 0 L 0 ${element.offsetHeight} L ${element.offsetWidth - overlapScrollBarSize} ${element.offsetHeight} L ${element.offsetWidth - overlapScrollBarSize} 0 Z")`;
+                element.style.clipPath =
+                    `path("M 0 0 L 0 ${element.offsetHeight} L ${element.offsetWidth - overlapScrollBarSize} ${element.offsetHeight} L ${element.offsetWidth - overlapScrollBarSize} 0 Z")`;
 
                 snappedComponent.setRegularLength(`${isVertical ? listBounds.width : listBounds.height}${PX}`);
                 const { width: sWidth, height: sHeight } = snappedComponent.getBounds() ?? { width: 0, height: 0 },
@@ -170,14 +176,16 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                         right = width - scrollBarSize;
                         top = sHeight;
                         bottom = height;
-                        containerElement.style.clipPath = `path("M 0 ${top + delta} L 0 ${height} L ${width} ${height} L ${width} 0 L ${right} 0 L ${right} ${top + delta} Z")`;
+                        containerElement.style.clipPath =
+                            `path("M 0 ${top + delta} L 0 ${height} L ${width} ${height} L ${width} 0 L ${right} 0 L ${right} ${top + delta} Z")`;
                     } else {
                         const delta = snappedComponent.getData()?.measures.delta ?? 0;
                         left = sWidth;
                         right = width;
                         top = 0;
                         bottom = height - scrollBarSize;
-                        containerElement.style.clipPath = `path("M ${left + delta} 0 L ${left + delta} ${bottom} L 0 ${bottom} L 0 ${height} L ${width} ${height} L ${width} 0 Z")`;
+                        containerElement.style.clipPath =
+                            `path("M ${left + delta} 0 L ${left + delta} ${bottom} L 0 ${bottom} L 0 ${height} L ${width} ${height} L ${width} 0 Z")`;
                     }
                 }
             }
@@ -199,10 +207,6 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     const _onTrackBoxChangeHandler = useRef((v: number) => {
         _setCacheVersion(v);
     });
-
-    useEffect(() => {
-        _setInitialized(true);
-    }, []);
 
     useEffect(() => {
         _trackBox.current.displayComponents = _displayComponents.current as any;
@@ -361,19 +365,6 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                 _resizeObserver.current.observe($containerRef.current);
             }
         }
-
-        return () => {
-            if ($containerRef && $containerRef.current) {
-                $containerRef.current.removeEventListener(SCROLL, _onContainerScrollHandler.current);
-                $containerRef.current.removeEventListener(SCROLL_END, _onContainerScrollEndHandler.current);
-
-                $containerRef.current.removeEventListener(SCROLL, _onScrollHandler.current);
-
-                if (_resizeObserver.current) {
-                    _resizeObserver.current.disconnect();
-                }
-            }
-        }
     }, [$containerRef, _resizeObserver, _onResizeHandler, _onScrollHandler, _onContainerScrollHandler, _onContainerScrollEndHandler]);
 
     const debouncedResetCollection = useDebounce((_trackBox: RefObject<TrackBox>, items: IVirtualListCollection | undefined, itemSize: number) => {
@@ -384,7 +375,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         debouncedResetCollection.execute(_trackBox, items, itemSize);
     }, [_trackBox, items, itemSize]);
 
-    const resetRenderers = useRef(() => {
+    const resetRenderers = useCallback(() => {
         const doMap: { [id: number]: number } = {}, components = _displayComponents.current;
         for (let i = 0, l = components.length; i < l; i++) {
             const item = components[i], ref = item, component = ref.current;
@@ -395,7 +386,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
 
         _trackBox.current.setDisplayObjectIndexMapById(doMap);
-    });
+    }, [_trackBox, _displayComponents]);
 
     const _resizeObserveQueue = useRef<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
 
@@ -406,7 +397,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             const ref = queue[i], el = ref.current?.getElement();
             if (el) {
                 isChanged = true;
-                _resizeObserver.current?.observe(el);
+                _componentsResizeObserver.current?.observe(el);
                 _resizeObserveQueue.current.slice(i, 1);
                 continue;
             }
@@ -425,7 +416,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         _resizeObserveQueue.current.push(ref);
     });
 
-    const createDisplayComponentsIfNeed = useRef((displayItems: IRenderVirtualListCollection | null) => {
+    const createDisplayComponentsIfNeed = useCallback((displayItems: IRenderVirtualListCollection | null) => {
         if (!displayItems || !$listRef) {
             _trackBox.current.setDisplayObjectIndexMapById({});
             return;
@@ -454,22 +445,22 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             _setDisplayComponentsList([...components]);
         }
 
-        resetRenderers.current();
-    });
+        resetRenderers();
+    }, [$listRef, _trackBox, _displayComponents, resetRenderers, waitToResizeObserve, itemRenderer]);
 
     /**
      * Tracking by id
      */
-    const tracking = useRef(() => {
+    const tracking = useCallback(() => {
         _trackBox.current.track();
-    });
+    }, [_trackBox]);
 
-    const resetBoundsSize = useRef((isVertical: boolean, totalSize: number) => {
+    const resetBoundsSize = useCallback((isVertical: boolean, totalSize: number) => {
         const l = $listRef;
         if (l && l.current) {
             l.current.style[isVertical ? HEIGHT_PROP_NAME : WIDTH_PROP_NAME] = `${totalSize}${PX}`;
         }
-    });
+    }, [$listRef]);
 
     /**
      * Returns the bounds of an element with a given id
@@ -512,11 +503,11 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
                     let actualScrollSize = scrollSize + delta;
 
-                    resetBoundsSize.current(isVertical, totalSize);
+                    resetBoundsSize(isVertical, totalSize);
 
-                    createDisplayComponentsIfNeed.current(displayItems);
+                    createDisplayComponentsIfNeed(displayItems);
 
-                    tracking.current();
+                    tracking();
 
                     const _scrollSize = _trackBox.current.getItemPosition(id, stickyMap, { ...opts, scrollSize: actualScrollSize, fromItemId: id }),
                         notChanged = actualScrollSize === _scrollSize;
@@ -550,7 +541,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             }
         }
     }, [$containerRef, items, dynamicSize, itemSize, itemsOffset, stickyMap, snap, enabledBufferOptimization, _trackBox, _bounds, _isVertical,
-        _onScrollHandler, resetBoundsSize, createDisplayComponentsIfNeed, tracking, clearScrollToRepeatExecutionTimeout,
+        _onScrollHandler, resetBoundsSize, createDisplayComponentsIfNeed, tracking, clearScrollToRepeatExecutionTimeout, itemRenderer
     ]);
 
     /**
@@ -571,9 +562,9 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
     }, [items, scrollTo]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (_initialized) {
-            resetRenderers.current();
+            resetRenderers();
         }
     }, [_initialized, resetRenderers]);
 
@@ -597,7 +588,9 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useLayoutEffect(() => {
         if (_initialized && _bounds && items) {
-            const { width, height } = _bounds, scrollSize = (_isVertical.current ? $containerRef?.current?.scrollTop ?? 0 : $containerRef?.current?.scrollLeft) ?? 0;
+            const { width, height } = _bounds, scrollSize = (_isVertical.current
+                ? $containerRef?.current?.scrollTop ?? 0
+                : $containerRef?.current?.scrollLeft) ?? 0;
             let actualScrollSize = scrollSize;
             const opts: IUpdateCollectionOptions<IVirtualListItem, IVirtualListCollection> = {
                 bounds: { width, height }, dynamicSize, isVertical, itemSize,
@@ -605,11 +598,11 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             };
             const { displayItems, totalSize } = _trackBox.current.updateCollection(items, stickyMap, opts);
 
-            resetBoundsSize.current(isVertical, totalSize);
+            resetBoundsSize(isVertical, totalSize);
 
-            createDisplayComponentsIfNeed.current(displayItems);
+            createDisplayComponentsIfNeed(displayItems);
 
-            tracking.current();
+            tracking();
 
             if (_isSnappingMethodAdvanced.current) {
                 updateRegularRenderer.current();
@@ -640,6 +633,17 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
     useEffect(() => {
         return () => {
+            if ($containerRef && $containerRef.current) {
+                $containerRef.current.removeEventListener(SCROLL, _onContainerScrollHandler.current);
+                $containerRef.current.removeEventListener(SCROLL_END, _onContainerScrollEndHandler.current);
+
+                $containerRef.current.removeEventListener(SCROLL, _onScrollHandler.current);
+            }
+
+            if (_resizeObserver && _resizeObserver.current) {
+                _resizeObserver.current.disconnect();
+            }
+
             if (debouncedResetCollection) {
                 debouncedResetCollection.dispose();
             }
@@ -648,11 +652,11 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                 debouncedStopJumpingScroll.dispose();
             }
 
-            if (clearScrollToRepeatExecutionTimeout) {
+            if (clearScrollToRepeatExecutionTimeout && typeof clearScrollToRepeatExecutionTimeout !== undefined) {
                 clearScrollToRepeatExecutionTimeout.current();
             }
 
-            if (_resizeObserveQueue) {
+            if (_resizeObserveQueue && _resizeObserveQueue.current) {
                 _resizeObserveQueue.current = [];
             }
 
@@ -660,11 +664,11 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                 _trackBox.current.dispose();
             }
 
-            if (_componentsResizeObserver) {
-                _componentsResizeObserver.disconnect();
+            if (_componentsResizeObserver && _componentsResizeObserver.current) {
+                _componentsResizeObserver.current.disconnect();
             }
 
-            if (_resizeObserver.current) {
+            if (_resizeObserver && _resizeObserver.current) {
                 _resizeObserver.current.disconnect();
             }
         };
