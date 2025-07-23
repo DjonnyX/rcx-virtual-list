@@ -1,7 +1,7 @@
-import React, { createRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { createRef, ReactNode } from 'react';
 import { IVirtualListItemMethods, VirtualListItemRenderer } from '../models';
 import { IRenderVirtualListItem } from '../models/render-item.model';
-import { Id, ISize } from '../types';
+import { ISize } from '../types';
 import {
     DEFAULT_ZINDEX, DISPLAY_BLOCK, DISPLAY_NONE, HIDDEN_ZINDEX, POSITION_ABSOLUTE, POSITION_STICKY, PX, SIZE_100_PERSENT, SIZE_AUTO,
     TRANSLATE_3D, VISIBILITY_HIDDEN, VISIBILITY_VISIBLE, ZEROS_TRANSLATE_3D,
@@ -10,6 +10,10 @@ import {
 export interface IVirtualListItemProps {
     regular?: boolean;
     renderer?: VirtualListItemRenderer;
+}
+
+interface IVirtualListItemState {
+    data: IRenderVirtualListItem | undefined;
 }
 
 let __nextId: number = 0;
@@ -23,135 +27,186 @@ const DEFAULT_ITEM_RENDERER_FACTORY = () => <></>;
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
-export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListItemProps>(({ regular = false, renderer = DEFAULT_ITEM_RENDERER_FACTORY }, forwardedRef) => {
-    const $elementRef = createRef<HTMLDivElement>();
-    const $listItemRef = createRef<HTMLLIElement>();
-    const [itemRenderer, setItemRenderer] = useState<{ renderer: VirtualListItemRenderer }>({ renderer });
-    const [_id] = useState(() => {
-        return __nextId = __nextId === Number.MAX_SAFE_INTEGER ? 0 : __nextId + 1;
-    });
-    const [_data, _setData] = useState<IRenderVirtualListItem | undefined>();
-    const [_regular, _setRegular] = useState<boolean>(regular);
-    const [_regularLength, _setRegularLength] = useState<string>(SIZE_100_PERSENT);
+export class VirtualListItem extends React.Component<IVirtualListItemProps, IVirtualListItemState> implements IVirtualListItemMethods {
+    private _$elementRef = createRef<HTMLDivElement>();
 
-    useEffect(() => {
-        setItemRenderer({ renderer: renderer ?? DEFAULT_ITEM_RENDERER_FACTORY });
-    }, [renderer]);
+    private _$listItemRef = createRef<HTMLLIElement>();
 
-    const setDataTransform = useCallback((data?: IRenderVirtualListItem | undefined) => {
-        const result = data ?? _data;
-        // etc
-        return result;
-    }, [$elementRef, _data]);
+    private static __nextId: number = 0;
 
-    const update = useCallback((data?: IRenderVirtualListItem | undefined) => {
-        const d = data ?? _data, el = $elementRef.current;
-        if (d && el) {
-            const styles = el.style;
-            styles.zIndex = String(d.config.sticky);
-            if (d.config.snapped) {
+    private _id!: number;
+    get id() {
+        return this._id;
+    }
+
+    protected _regular: boolean = false;
+    get regular() { return this._regular; }
+
+    private _data: IRenderVirtualListItem | undefined = undefined;
+    get data() { return this._data; }
+
+    set data(v: IRenderVirtualListItem | undefined) {
+        if (this._data === v) {
+            return;
+        }
+
+        this._data = v;
+
+        this.update();
+
+        this.setState(v => ({
+            ...v,
+            data: this._data,
+        }));
+    }
+
+    protected _regularLength: string = SIZE_100_PERSENT;
+    set regularLength(v: string) {
+        if (this._regularLength === v) {
+            return;
+        }
+
+        this._regularLength = v;
+
+        this.update();
+    }
+    get regularLength() { return this._regularLength; }
+
+    get item() {
+        return this._data;
+    }
+
+    get itemId() {
+        return this._data?.id;
+    }
+
+    get element() {
+        return this._$elementRef?.current;
+    }
+
+    protected _renderer: VirtualListItemRenderer = DEFAULT_ITEM_RENDERER_FACTORY;
+    get renderer() { return this._renderer; }
+
+    set renderer(v: VirtualListItemRenderer) {
+        if (this._renderer !== v) {
+            this._renderer = v;
+
+            this.update();
+        }
+    }
+
+    constructor(props: IVirtualListItemProps) {
+        super(props);
+
+        this._id = VirtualListItem.__nextId = VirtualListItem.__nextId === Number.MAX_SAFE_INTEGER
+            ? 0 : VirtualListItem.__nextId + 1;
+
+
+        this._regular = props.regular ?? false;
+        this._renderer = props.renderer ?? DEFAULT_ITEM_RENDERER_FACTORY;
+
+        this.state = {
+            data: undefined,
+        }
+    }
+
+    protected update() {
+        const data = this._data, regular = this._regular, length = this._regularLength, element = this._$elementRef.current;
+        if (data && element) {
+            const styles = element.style;
+            styles.zIndex = String(data.config.sticky);
+            if (data.config.snapped) {
                 styles.transform = ZEROS_TRANSLATE_3D;
-                if (!d.config.isSnappingMethodAdvanced) {
+                if (!data.config.isSnappingMethodAdvanced) {
                     styles.position = POSITION_STICKY;
                 }
             } else {
                 styles.position = POSITION_ABSOLUTE;
-                if (_regular) {
-                    styles.transform = `${TRANSLATE_3D}(${d.config.isVertical ? 0 : d.measures.delta}${PX}, ${d.config.isVertical ? d.measures.delta : 0}${PX} , 0)`;
+                if (regular) {
+                    styles.transform = `${TRANSLATE_3D}(${data.config.isVertical ? 0 : data.measures.delta}${PX}, ${data.config.isVertical ? data.measures.delta : 0}${PX} , 0)`;
                 } else {
-                    styles.transform = `${TRANSLATE_3D}(${d.config.isVertical ? 0 : d.measures.x}${PX}, ${d.config.isVertical ? d.measures.y : 0}${PX} , 0)`;
+                    styles.transform = `${TRANSLATE_3D}(${data.config.isVertical ? 0 : data.measures.x}${PX}, ${data.config.isVertical ? data.measures.y : 0}${PX} , 0)`;
                 }
             }
-            styles.height = d.config.isVertical ? d.config.dynamic ? SIZE_AUTO : `${d.measures.height}${PX}` : _regular ? _regularLength : SIZE_100_PERSENT;
-            styles.width = d.config.isVertical ? _regular ? _regularLength : SIZE_100_PERSENT : d.config.dynamic ? SIZE_AUTO : `${d.measures.width}${PX}`;
+            styles.height = data.config.isVertical ? data.config.dynamic ? SIZE_AUTO : `${data.measures.height}${PX}` : regular ? length : SIZE_100_PERSENT;
+            styles.width = data.config.isVertical ? regular ? length : SIZE_100_PERSENT : data.config.dynamic ? SIZE_AUTO : `${data.measures.width}${PX}`;
         }
-    }, [$elementRef, _regular, _regularLength, _data])
+    }
 
-    const show = useCallback(() => {
-        const el = $elementRef.current;
-        if (el) {
-            const styles = el.style;
-            if (_regular) {
-                if (styles.display === DISPLAY_BLOCK) {
-                    return;
-                }
+    shouldComponentUpdate(nextProps: Readonly<IVirtualListItemProps>, nextState: Readonly<IVirtualListItemState>): boolean {
+        let needToUpdate = false;
+        if (this._renderer !== nextProps.renderer) {
+            this.renderer = nextProps.renderer ?? DEFAULT_ITEM_RENDERER_FACTORY;
+            needToUpdate = true;
+        }
 
-                styles.display = DISPLAY_BLOCK;
-            } else {
-                if (styles.visibility === VISIBILITY_VISIBLE) {
-                    return;
-                }
+        if (this._regular !== nextProps.regular) {
+            needToUpdate = true;
+        }
 
-                styles.visibility = VISIBILITY_VISIBLE;
+        if (this.state !== nextState) {
+            needToUpdate = true;
+        }
+
+        return needToUpdate;
+    }
+
+    getBounds(): ISize {
+        const element = this._$elementRef.current,
+            { width, height } = element?.getBoundingClientRect() ?? { width: 0, height: 0 };
+        return { width, height };
+    }
+
+    show() {
+        const element = this._$elementRef.current;
+        if (!element) {
+            return;
+        }
+
+        const regular = this._regular, styles = element.style;
+        if (regular) {
+            if (styles.display === DISPLAY_BLOCK) {
+                return;
             }
-            styles.zIndex = String(_data?.config?.sticky ?? DEFAULT_ZINDEX);
-        }
-    }, [$elementRef, _regular, _data]);
 
-    const hide = useCallback(() => {
-        const el = $elementRef.current;
-        if (el) {
-            const styles = el.style;
-            if (_regular) {
-                if (styles.display === DISPLAY_NONE) {
-                    return;
-                }
-
-                styles.display = DISPLAY_NONE;
-            } else {
-                if (styles.visibility === VISIBILITY_HIDDEN) {
-                    return;
-                }
-
-                styles.visibility = VISIBILITY_HIDDEN;
+            styles.display = DISPLAY_BLOCK;
+        } else {
+            if (styles.visibility === VISIBILITY_VISIBLE) {
+                return;
             }
-            styles.transform = ZEROS_TRANSLATE_3D;
-            styles.zIndex = HIDDEN_ZINDEX;
+
+            styles.visibility = VISIBILITY_VISIBLE;
         }
-    }, [$elementRef, _regular]);
+        styles.zIndex = String(this._data?.config?.sticky ?? DEFAULT_ZINDEX);
+    }
 
-    useImperativeHandle(forwardedRef, () => ({
-        getElement: () => {
-            return $elementRef.current;
-        },
-        getId: () => {
-            return _id;
-        },
-        setData: (data: IRenderVirtualListItem | undefined) => {
-            _setData(setDataTransform(data));
-            update(data);
-        },
-        getData: (): IRenderVirtualListItem | undefined => {
-            return _data;
-        },
-        setRegular: (value: boolean) => {
-            _setRegular(value);
-            update();
-        },
-        setRegularLength: (length: string) => {
-            _setRegularLength(length);
-            update();
-        },
-        setRenderer: (renderer: VirtualListItemRenderer) => {
-            setItemRenderer({ renderer });
-        },
-        getBounds: (): ISize => {
-            const element = $elementRef.current,
-                { width, height } = element?.getBoundingClientRect() ?? { width: 0, height: 0 };
-            return { width, height };
-        },
-        getItemId: (): Id | undefined => {
-            return _data?.id;
-        },
-        show: (): void => {
-            show();
-        },
-        hide: (): void => {
-            hide();
-        },
-    }), [$elementRef, _data, _id, itemRenderer]);
+    hide() {
+        const element = this._$elementRef.current;
+        if (!element) {
+            return;
+        }
 
-    const classNames = useCallback((data: IRenderVirtualListItem, ...classes: Array<string>) => {
+        const regular = this._regular, styles = element.style;
+        if (regular) {
+            if (styles.display === DISPLAY_NONE) {
+                return;
+            }
+
+            styles.display = DISPLAY_NONE;
+        } else {
+            if (styles.visibility === VISIBILITY_HIDDEN) {
+                return;
+            }
+
+            styles.visibility = VISIBILITY_HIDDEN;
+        }
+        styles.position = POSITION_ABSOLUTE;
+        styles.transform = ZEROS_TRANSLATE_3D;
+        styles.zIndex = HIDDEN_ZINDEX;
+    }
+
+
+    private classNames(data: IRenderVirtualListItem, ...classes: Array<string>) {
         const result = ['rcxvl__item-container', ...(classes ?? [])];
         if (data.config.snapped) {
             result.push('snapped');
@@ -160,16 +215,17 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
             result.push('snapped-out');
         }
         return result.join(' ');
-    }, []);
+    }
 
-    const content = (itemRenderer !== undefined || itemRenderer !== null) && <itemRenderer.renderer data={_data?.data!} config={_data?.config!} />
-
-    return <div ref={$elementRef} className='rcxvl__item'>
-        {
-            _data &&
-            <li ref={$listItemRef} className={classNames(_data)}>
-                {content}
-            </li>
-        }
-    </div>
-});
+    render(): React.ReactNode {
+        const renderer = this._renderer, itemRenderer = { renderer }, data = this._data;
+        return <div ref={this._$elementRef} className='rcxvl__item'>
+            {
+                this._data &&
+                <li ref={this._$listItemRef} className={this.classNames(this._data)}>
+                    {(renderer !== undefined || renderer !== null) && <itemRenderer.renderer data={data?.data!} config={data?.config!} />}
+                </li>
+            }
+        </div>
+    }
+}

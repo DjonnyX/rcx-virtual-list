@@ -1,14 +1,6 @@
-import { ScrollDirection } from "../models";
+import { IVirtualListItemMethods, ScrollDirection } from "../models";
 
 type TrackingPropertyId = string | number;
-
-interface IVirtualListItemComponent<I = any> {
-    getId: () => number;
-    setData: (data: I) => void;
-    show: () => void;
-    hide: () => void;
-    [prop: string]: any;
-}
 
 /**
  * Tracks display items by property
@@ -16,7 +8,7 @@ interface IVirtualListItemComponent<I = any> {
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
-export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
+export class Tracker<I = any, C extends IVirtualListItemMethods = any> {
     /**
      * display objects dictionary of indexes by id
      */
@@ -74,19 +66,19 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
                         compIndex = this._displayObjectIndexMapById[diId], comp = components[compIndex];
 
                     const compId = comp?.current?.id;
-                    if (comp !== undefined && compId === diId) {
+                    if (comp?.current && compId === diId) {
                         const indexByUntrackedItems = untrackedItems.findIndex(v => {
-                            return v.current.id === compId;
+                            return v.current && v.current.id === compId;
                         });
                         if (indexByUntrackedItems > -1) {
-                            if (snapedComponent) {
+                            if (snapedComponent?.current) {
                                 if (item['config']['snapped'] || item['config']['snappedOut']) {
                                     isRegularSnapped = true;
-                                    snapedComponent.current.setData(item);
+                                    snapedComponent.current.data = item;
                                     snapedComponent.current.show();
                                 }
                             }
-                            comp.current.setData(item);
+                            comp.current.data = item;
                             comp.current.show();
                             untrackedItems.splice(indexByUntrackedItems, 1);
                             continue;
@@ -98,15 +90,15 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
 
             if (untrackedItems.length > 0) {
                 const comp = untrackedItems.shift(), item = items[i];
-                if (comp && comp.current) {
-                    if (snapedComponent && snapedComponent.current) {
+                if (comp?.current) {
+                    if (snapedComponent?.current) {
                         if (item['config']['snapped'] || item['config']['snappedOut']) {
                             isRegularSnapped = true;
-                            snapedComponent.current.setData(item);
+                            snapedComponent.current.data = item;
                             snapedComponent.current.show();
                         }
                     }
-                    comp.current.setData(item);
+                    comp.current.data = item;
                     comp.current.show();
 
                     if (this._trackMap) {
@@ -126,8 +118,8 @@ export class Tracker<I = any, C extends IVirtualListItemComponent = any> {
         }
 
         if (!isRegularSnapped) {
-            if (snapedComponent && snapedComponent.current) {
-                snapedComponent.current.setData(null);
+            if (snapedComponent?.current) {
+                snapedComponent.current.data = null;
                 snapedComponent.current.hide();
             }
         }
