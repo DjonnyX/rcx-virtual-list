@@ -1,4 +1,4 @@
-import React, { createRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { createRef, forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { IVirtualListItemMethods, VirtualListItemRenderer } from '../models';
 import { IRenderVirtualListItem } from '../models/render-item.model';
 import { Id, ISize } from '../types';
@@ -38,13 +38,13 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
         setItemRenderer({ renderer: renderer ?? DEFAULT_ITEM_RENDERER_FACTORY });
     }, [renderer]);
 
-    const setDataTransform = useCallback((data?: IRenderVirtualListItem | undefined) => {
+    const setDataTransform = (data?: IRenderVirtualListItem | undefined) => {
         const result = data ?? _data;
         // etc
         return result;
-    }, [$elementRef, _data]);
+    };
 
-    const update = useCallback((data?: IRenderVirtualListItem | undefined) => {
+    const update = (data?: IRenderVirtualListItem | undefined) => {
         const d = data ?? _data, el = $elementRef.current;
         if (d && el) {
             const styles = el.style;
@@ -65,9 +65,9 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
             styles.height = d.config.isVertical ? d.config.dynamic ? SIZE_AUTO : `${d.measures.height}${PX}` : _regular ? _regularLength : SIZE_100_PERSENT;
             styles.width = d.config.isVertical ? _regular ? _regularLength : SIZE_100_PERSENT : d.config.dynamic ? SIZE_AUTO : `${d.measures.width}${PX}`;
         }
-    }, [$elementRef, _regular, _regularLength, _data])
+    };
 
-    const show = useCallback(() => {
+    const show = () => {
         const el = $elementRef.current;
         if (el) {
             const styles = el.style;
@@ -86,9 +86,9 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
             }
             styles.zIndex = String(_data?.config?.sticky ?? DEFAULT_ZINDEX);
         }
-    }, [$elementRef, _regular, _data]);
+    };
 
-    const hide = useCallback(() => {
+    const hide = () => {
         const el = $elementRef.current;
         if (el) {
             const styles = el.style;
@@ -108,7 +108,7 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
             styles.transform = ZEROS_TRANSLATE_3D;
             styles.zIndex = HIDDEN_ZINDEX;
         }
-    }, [$elementRef, _regular]);
+    };
 
     useImperativeHandle(forwardedRef, () => ({
         getElement: () => {
@@ -151,7 +151,7 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
         },
     }), [$elementRef, _data, _id, itemRenderer]);
 
-    const classNames = useCallback((data: IRenderVirtualListItem, ...classes: Array<string>) => {
+    const classNames = (data: IRenderVirtualListItem, ...classes: Array<string>) => {
         const result = ['rcxvl__item-container', ...(classes ?? [])];
         if (data.config.snapped) {
             result.push('snapped');
@@ -160,7 +160,7 @@ export const VirtualListItem = forwardRef<IVirtualListItemMethods, IVirtualListI
             result.push('snapped-out');
         }
         return result.join(' ');
-    }, []);
+    };
 
     const content = (itemRenderer !== undefined || itemRenderer !== null) && <itemRenderer.renderer data={_data?.data!} config={_data?.config!} />
 

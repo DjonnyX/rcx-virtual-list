@@ -116,7 +116,6 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     const _isStopJumpingScroll = useRef<boolean>(false);
     const _displayComponents = useRef<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
     const _snapedDisplayComponent = useRef<IVirtualListItemMethods | null>(null);
-    const _resizeSnappedObserver = useRef<ResizeObserver | null>(null);
     const [_displayComponentsList, _setDisplayComponentsList] = useState<Array<React.RefObject<IVirtualListItemMethods | null>>>([]);
     const [_bounds, _setBounds] = useState<ISize | null>(null);
     const [_scrollSize, _setScrollSize] = useState<number>(0);
@@ -142,9 +141,9 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
     }));
     const _scrollToRepeatExecutionTimeout = useRef<any>(undefined);
 
-    const updateRegularRenderer = useRef(() => {
-        const list = $listRef, container = $containerRef, snappedComponent = _snapedDisplayComponent?.current;
-        if (list && list.current && container && container.current && snappedComponent) {
+    const updateRegularRenderer = useCallback(() => {
+        const list = $listRef, container = $containerRef, snappedComponent = _snapedDisplayComponent?.current, snappedContainer = $snappedRef?.current;
+        if (list && list.current && container && container.current && snappedComponent && snappedContainer) {
             const isVertical = _isVertical, listBounds = list.current.getBoundingClientRect(), listElement = list?.current,
                 { width: lWidth, height: lHeight } = listElement?.getBoundingClientRect() ?? { width: 0, height: 0 },
                 { width, height } = container.current?.getBoundingClientRect() ?? { width: 0, height: 0 },
@@ -190,19 +189,13 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
                 }
             }
         }
-    });
+    }, [$listRef, $containerRef, $snappedRef, _snapedDisplayComponent, _isVertical]);
 
     useEffect(() => {
-        const snappedDisplayComponentref = _snapedDisplayComponent.current;
-        _trackBox.current.snapedDisplayComponent = _snapedDisplayComponent;
-        if (snappedDisplayComponentref && snappedDisplayComponentref && !_resizeSnappedObserver.current) {
-            const element = snappedDisplayComponentref?.getElement();
-            if (element) {
-                _resizeSnappedObserver.current = new ResizeObserver(updateRegularRenderer.current);
-                _resizeSnappedObserver.current.observe(element);
-            }
+        if (_trackBox?.current) {
+            _trackBox.current.snapedDisplayComponent = _snapedDisplayComponent;
         }
-    }, [_snapedDisplayComponent, _resizeSnappedObserver, updateRegularRenderer]);
+    }, [_snapedDisplayComponent, _trackBox]);
 
     const _onTrackBoxChangeHandler = useRef((v: number) => {
         _setCacheVersion(v);
@@ -272,10 +265,6 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             _setBounds({ width, height });
         } else {
             _setBounds({ width: DEFAULT_LIST_SIZE, height: DEFAULT_LIST_SIZE });
-        }
-
-        if (_isSnappingMethodAdvanced.current) {
-            updateRegularRenderer.current();
         }
     });
 
@@ -586,6 +575,14 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
         }
     }, [mountedDisplayObjects, executeResizeObserverQueue]);
 
+    const [_renderVersion, setRendererVersion] = useState<number>(0);
+
+    useEffect(() => {
+        if (_isSnappingMethodAdvanced.current) {
+            updateRegularRenderer();
+        }
+    }, [_renderVersion, _isSnappingMethodAdvanced, updateRegularRenderer]);
+
     useLayoutEffect(() => {
         if (_initialized && _bounds && items) {
             const { width, height } = _bounds, scrollSize = (_isVertical.current
@@ -605,7 +602,7 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
             tracking();
 
             if (_isSnappingMethodAdvanced.current) {
-                updateRegularRenderer.current();
+                updateRegularRenderer();
             }
 
             if (!_isStopJumpingScroll.current) {
@@ -666,10 +663,6 @@ export const VirtualList = forwardRef<IVirtualListMethods, IVirtualListProps>(({
 
             if (_componentsResizeObserver && _componentsResizeObserver.current) {
                 _componentsResizeObserver.current.disconnect();
-            }
-
-            if (_resizeObserver && _resizeObserver.current) {
-                _resizeObserver.current.disconnect();
             }
         };
     }, []);
