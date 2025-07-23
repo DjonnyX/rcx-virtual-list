@@ -846,7 +846,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         }
 
         for (let i = 0, l = this._displayComponents.length; i < l; i++) {
-            const component = this._displayComponents[i], itemId = component.current?.getItemId();
+            const component = this._displayComponents[i], itemId = component.current?.itemId;
             if (itemId === undefined) {
                 continue;
             }

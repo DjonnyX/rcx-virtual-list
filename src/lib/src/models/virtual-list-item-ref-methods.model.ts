@@ -9,15 +9,15 @@ import { VirtualListItemRenderer } from "./virtual-list-item-renderer.model";
  * @email djonnyx@gmail.com
  */
 export interface IVirtualListItemMethods {
-    getId: () => number;
-    setData: (data: IRenderVirtualListItem | undefined) => void;
-    getData: () => IRenderVirtualListItem | undefined;
-    setRenderer: (renderer: VirtualListItemRenderer) => void;
-    setRegular: (value: boolean) => void;
-    setRegularLength: (length: string) => void;
-    getElement: () => HTMLDivElement | null;
+    get id(): number;
+    set data(data: IRenderVirtualListItem | null | undefined);
+    get data(): IRenderVirtualListItem | null | undefined;
+    set renderer(renderer: VirtualListItemRenderer);
+    set regular(value: boolean);
+    set regularLength(length: string);
+    get element(): HTMLDivElement | null;
+    get itemId(): Id | undefined;
     getBounds: () => ISize;
-    getItemId: () => Id | undefined;
     show: () => void;
     hide: () => void;
 }

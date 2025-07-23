@@ -4,7 +4,6 @@ import './lib/index.css';
 import './App.scss';
 import { LOGO } from './const';
 import { VirtualListItemRenderer } from './lib/src/models';
-import { IVirtualListMethods } from './lib/src/models';
 
 const MAX_ITEMS = 10000;
 
@@ -162,7 +161,7 @@ function App() {
     return verticalItems1.length > 0 ? verticalItems1[verticalItems1.length - 1].id : 0;
   });
   const itemId = useRef<Id>(minId);
-  const $listContainerRef = useRef<IVirtualListMethods>(null);
+  const $listContainerRef = useRef<VirtualList>(null);
 
   const [minDlId] = useState<Id>(() => {
     return verticalItems1.length > 0 ? verticalItems1[0].id : 0;
@@ -171,7 +170,7 @@ function App() {
     return verticalItems1.length > 0 ? verticalItems1[verticalItems1.length - 1].id : 0;
   });
   const itemDlId = useRef<Id>(minId);
-  const $listContainerRef1 = useRef<IVirtualListMethods>(null);
+  const $listContainerRef1 = useRef<VirtualList>(null);
 
   const onButtonScrollToIdClickHandler = () => {
     const list = $listContainerRef.current;
@@ -214,8 +213,8 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.5</span></div>
-        <div className="version"><span>React v 16.8.X - v 19.X.X</span></div>
+        <div className="version"><span>v 1.0.7</span></div>
+        <div className="version"><span>React v 16.X.X - v 19.X.X</span></div>
       </div>
 
       <div className="vl-section">
