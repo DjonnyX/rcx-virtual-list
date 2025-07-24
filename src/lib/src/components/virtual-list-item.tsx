@@ -133,6 +133,14 @@ export class VirtualListItem extends React.Component<IVirtualListItemProps, IVir
         }
     }
 
+    getSnapshotBeforeUpdate(prevProps: Readonly<IVirtualListItemProps>, prevState: Readonly<IVirtualListItemState>) {
+        return null;
+    }
+
+    componentDidUpdate(prevProps: Readonly<IVirtualListItemProps>, prevState: Readonly<IVirtualListItemState>, snapshot?: any): void {
+        
+    }
+
     shouldComponentUpdate(nextProps: Readonly<IVirtualListItemProps>, nextState: Readonly<IVirtualListItemState>): boolean {
         let needToUpdate = false;
         if (this._renderer !== nextProps.renderer) {
