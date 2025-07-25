@@ -467,7 +467,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
                 }
 
                 if (deletedItemsMap.hasOwnProperty(i)) {
-                    const bounds = deletedItemsMap[i], size = bounds[sizeProperty] ?? typicalItemSize;
+                    const bounds = deletedItemsMap[i], size = bounds?.[sizeProperty] ?? typicalItemSize;
                     if (y < scrollSize - size) {
                         leftSizeOfDeletedItems += size;
                     }

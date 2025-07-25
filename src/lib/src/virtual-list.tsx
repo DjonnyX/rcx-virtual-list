@@ -494,6 +494,41 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         }
     }
 
+    private _onContainerScrollHandler = (e: Event) => {
+        const container = this._$containerRef?.current, list = this._$listRef?.current;
+        if (container && list) {
+            const scrollSize = (this._isVertical ? container.scrollTop : container.scrollLeft);
+            this._trackBox.deltaDirection = this._scrollSize > scrollSize ? -1 : this._scrollSize < scrollSize ? 1 : 0;
+            const event = new ScrollEvent({
+                direction: this._trackBox.scrollDirection, container: container,
+                list, delta: this._trackBox.delta,
+                scrollDelta: this._trackBox.scrollDelta, isVertical: this._isVertical,
+            });
+
+            if (this._onScroll !== undefined) {
+                this._onScroll(event);
+            }
+        }
+    }
+
+    private _onContainerScrollEndHandler = (e: Event) => {
+        const container = this._$containerRef?.current, list = this._$listRef?.current;
+        if (container && list) {
+            const scrollSize = (this._isVertical ? container.scrollTop : container.scrollLeft);
+            this._trackBox.deltaDirection = this._scrollSize > scrollSize ? -1 : 0;
+
+            const event = new ScrollEvent({
+                direction: this._trackBox.scrollDirection, container: container,
+                list, delta: this._trackBox.delta,
+                scrollDelta: this._trackBox.scrollDelta, isVertical: this._isVertical,
+            });
+
+            if (this._onScrollEnd !== undefined) {
+                this._onScrollEnd(event);
+            }
+        }
+    }
+
     constructor(props: IVirtualListProps) {
         super(props);
 
@@ -926,41 +961,6 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         const latItem = items?.[items.length > 0 ? items.length - 1 : 0];
         if (latItem) {
             this.scrollTo(latItem.id, behavior);
-        }
-    }
-
-    private _onContainerScrollHandler(e: Event) {
-        const containerEl = this._$containerRef, list = this._$listRef?.current;
-        if (containerEl && containerEl.current && list) {
-            const scrollSize = (this._isVertical ? containerEl.current.scrollTop : containerEl.current.scrollLeft);
-            this._trackBox.deltaDirection = this._scrollSize > scrollSize ? -1 : this._scrollSize < scrollSize ? 1 : 0;
-            const event = new ScrollEvent({
-                direction: this._trackBox.scrollDirection, container: containerEl.current,
-                list, delta: this._trackBox.delta,
-                scrollDelta: this._trackBox.scrollDelta, isVertical: this._isVertical,
-            });
-
-            if (this._onScroll !== undefined) {
-                this._onScroll(event);
-            }
-        }
-    }
-
-    private _onContainerScrollEndHandler(e: Event) {
-        const containerEl = this._$containerRef, list = this._$listRef?.current;
-        if (containerEl && containerEl.current && list) {
-            const scrollSize = (this._isVertical ? containerEl.current.scrollTop : containerEl.current.scrollLeft);
-            this._trackBox.deltaDirection = this._scrollSize > scrollSize ? -1 : 0;
-
-            const event = new ScrollEvent({
-                direction: this._trackBox.scrollDirection, container: containerEl.current,
-                list, delta: this._trackBox.delta,
-                scrollDelta: this._trackBox.scrollDelta, isVertical: this._isVertical,
-            });
-
-            if (this._onScrollEnd !== undefined) {
-                this._onScrollEnd(event);
-            }
         }
     }
 
