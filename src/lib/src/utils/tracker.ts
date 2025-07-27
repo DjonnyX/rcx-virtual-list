@@ -1,6 +1,16 @@
 import { IVirtualListItemMethods, ScrollDirection } from "../models";
+import { Id, ISize } from "../types";
 
 type TrackingPropertyId = string | number;
+
+export interface IVirtualListItemComponent<I = any> {
+    getBounds(): ISize;
+    itemId: Id;
+    id: number;
+    item: I | null;
+    show: () => void;
+    hide: () => void;
+}
 
 /**
  * Tracks display items by property
@@ -8,7 +18,7 @@ type TrackingPropertyId = string | number;
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
-export class Tracker<I = any, C extends IVirtualListItemMethods = any> {
+export class Tracker<C extends IVirtualListItemMethods = any> {
     /**
      * display objects dictionary of indexes by id
      */
@@ -79,7 +89,16 @@ export class Tracker<I = any, C extends IVirtualListItemMethods = any> {
                                 }
                             }
                             comp.current.data = item;
-                            comp.current.show();
+
+                            if (snapedComponent?.current) {
+                                if (item['config']['snapped'] || item['config']['snappedOut']) {
+                                    comp.current.hide();
+                                } else {
+                                    comp.current.show();
+                                }
+                            } else {
+                                comp.current.show();
+                            }
                             untrackedItems.splice(indexByUntrackedItems, 1);
                             continue;
                         }
@@ -99,7 +118,15 @@ export class Tracker<I = any, C extends IVirtualListItemMethods = any> {
                         }
                     }
                     comp.current.data = item;
-                    comp.current.show();
+                    if (snapedComponent?.current) {
+                        if (item['config']['snapped'] || item['config']['snappedOut']) {
+                            comp.current.hide();
+                        } else {
+                            comp.current.show();
+                        }
+                    } else {
+                        comp.current.show();
+                    }
 
                     if (this._trackMap) {
                         this._trackMap[itemTrackingProperty] = comp.current.id;
@@ -111,7 +138,7 @@ export class Tracker<I = any, C extends IVirtualListItemMethods = any> {
         if (untrackedItems.length) {
             for (let i = 0, l = untrackedItems.length; i < l; i++) {
                 const comp = untrackedItems[i];
-                if (comp && comp.current) {
+                if (comp?.current) {
                     comp.current.hide();
                 }
             }

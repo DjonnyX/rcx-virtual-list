@@ -56,8 +56,7 @@ const MAX_SCROLL_DIRECTION_POOL = 50, CLEAR_SCROLL_DIRECTION_TO = 10,
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
-export class CacheMap<I = string | number, B = any, E extends string = CacheMapEvents, L extends TEventHandler = CacheMapListeners>
-    extends EventEmitter<E, L> implements ICacheMap {
+export class CacheMap<I = string | number, B = any, E extends string = CacheMapEvents, L extends TEventHandler = CacheMapListeners> extends EventEmitter<E, L> implements ICacheMap {
     protected _map = new CMap<I, B>();
 
     protected _snapshot = new CMap<I, B>();
