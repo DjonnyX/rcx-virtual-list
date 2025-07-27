@@ -114,9 +114,9 @@ export class VirtualListItem extends React.Component<IVirtualListItemProps, IVir
         const data = this._data, regular = this._regular, length = this._regularLength, element = this._$elementRef.current;
         if (data && element) {
             const styles = element.style;
-            styles.zIndex = String(data.config.sticky);
+            styles.zIndex = data.config.zIndex;
             if (data.config.snapped) {
-                styles.transform = ZEROS_TRANSLATE_3D;
+                styles.transform = data.config.sticky === 1 ? ZEROS_TRANSLATE_3D : `${TRANSLATE_3D}(${data.config.isVertical ? 0 : data.measures.x}${PX}, ${data.config.isVertical ? data.measures.y : 0}${PX} , 0)`;
                 if (!data.config.isSnappingMethodAdvanced) {
                     styles.position = POSITION_STICKY;
                 }
@@ -131,6 +131,14 @@ export class VirtualListItem extends React.Component<IVirtualListItemProps, IVir
             styles.height = data.config.isVertical ? data.config.dynamic ? SIZE_AUTO : `${data.measures.height}${PX}` : regular ? length : SIZE_100_PERSENT;
             styles.width = data.config.isVertical ? regular ? length : SIZE_100_PERSENT : data.config.dynamic ? SIZE_AUTO : `${data.measures.width}${PX}`;
         }
+    }
+
+    getSnapshotBeforeUpdate(prevProps: Readonly<IVirtualListItemProps>, prevState: Readonly<IVirtualListItemState>) {
+        return null;
+    }
+
+    componentDidUpdate(prevProps: Readonly<IVirtualListItemProps>, prevState: Readonly<IVirtualListItemState>, snapshot?: any): void {
+
     }
 
     shouldComponentUpdate(nextProps: Readonly<IVirtualListItemProps>, nextState: Readonly<IVirtualListItemState>): boolean {
@@ -177,7 +185,7 @@ export class VirtualListItem extends React.Component<IVirtualListItemProps, IVir
 
             styles.visibility = VISIBILITY_VISIBLE;
         }
-        styles.zIndex = String(this._data?.config?.sticky ?? DEFAULT_ZINDEX);
+        styles.zIndex = styles.zIndex = this._data?.config?.zIndex ?? DEFAULT_ZINDEX;
     }
 
     hide() {

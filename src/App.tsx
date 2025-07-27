@@ -151,8 +151,8 @@ function App() {
   const [groupItemsStickyMap] = useState({ ...GROUP_ITEMS_STICKY_MAP });
   const [groupItems1] = useState([...GROUP_ITEMS]);
   const [groupItemsStickyMap1] = useState({ ...GROUP_ITEMS_STICKY_MAP });
-  const [groupDynamicItems] = useState([...GROUP_DYNAMIC_ITEMS]);
-  const [groupDynamicItemsStickyMap] = useState({ ...GROUP_DYNAMIC_ITEMS_STICKY_MAP });
+  const [groupDynamicItems, setGroupDynamicItems] = useState([...GROUP_DYNAMIC_ITEMS]);
+  const [groupDynamicItemsStickyMap, setGroupDynamicItemsStickyMap] = useState({ ...GROUP_DYNAMIC_ITEMS_STICKY_MAP });
 
   const [minId] = useState<Id>(() => {
     return verticalItems1.length > 0 ? verticalItems1[0].id : 0;
@@ -213,7 +213,7 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.8</span></div>
+        <div className="version"><span>v 1.0.12</span></div>
         <div className="version"><span>React v 16.X.X - v 19.X.X</span></div>
       </div>
 

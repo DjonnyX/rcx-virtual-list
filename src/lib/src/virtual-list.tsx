@@ -11,7 +11,7 @@ import {
     DEFAULT_SNAPPING_METHOD, HEIGHT_PROP_NAME, LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME,
     TRACK_BY_PROPERTY_NAME, WIDTH_PROP_NAME,
 } from './const';
-import { debounce, isDirection, ScrollEvent, toggleClassName, TrackBox } from './utils';
+import { debounce, isDirection, ScrollEvent, TrackBox } from './utils';
 import { Direction, Directions, SnappingMethod } from './enums';
 import { VirtualListItem } from './components';
 import { IGetItemPositionOptions, IUpdateCollectionOptions, TRACK_BOX_CHANGE_EVENT_NAME } from './utils/trackBox';
@@ -484,13 +484,46 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
     }
 
     private _onScrollEndHandler = (e?: Event) => {
-        // this.debouncedStopJumpingScroll.execute();
-
         this.disposeScrollToRepeatExecutionTimeout();
 
         const container = this._$containerRef?.current;
         if (container) {
             container.removeEventListener(SCROLL_END, this._onScrollEndHandler);
+        }
+    }
+
+    private _onContainerScrollHandler = (e: Event) => {
+        const container = this._$containerRef?.current, list = this._$listRef?.current;
+        if (container && list) {
+            const scrollSize = (this._isVertical ? container.scrollTop : container.scrollLeft);
+            this._trackBox.deltaDirection = this._scrollSize > scrollSize ? -1 : this._scrollSize < scrollSize ? 1 : 0;
+            const event = new ScrollEvent({
+                direction: this._trackBox.scrollDirection, container: container,
+                list, delta: this._trackBox.delta,
+                scrollDelta: this._trackBox.scrollDelta, isVertical: this._isVertical,
+            });
+
+            if (this._onScroll !== undefined) {
+                this._onScroll(event);
+            }
+        }
+    }
+
+    private _onContainerScrollEndHandler = (e: Event) => {
+        const container = this._$containerRef?.current, list = this._$listRef?.current;
+        if (container && list) {
+            const scrollSize = (this._isVertical ? container.scrollTop : container.scrollLeft);
+            this._trackBox.deltaDirection = this._scrollSize > scrollSize ? -1 : 0;
+
+            const event = new ScrollEvent({
+                direction: this._trackBox.scrollDirection, container: container,
+                list, delta: this._trackBox.delta,
+                scrollDelta: this._trackBox.scrollDelta, isVertical: this._isVertical,
+            });
+
+            if (this._onScrollEnd !== undefined) {
+                this._onScrollEnd(event);
+            }
         }
     }
 
@@ -764,6 +797,13 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
                     },
                     scrollSize = trackBox.getItemPosition(id, stickyMap, opts),
                     params: ScrollToOptions = { [isVertical ? TOP_PROP_NAME : LEFT_PROP_NAME]: scrollSize, behavior };
+
+                if (scrollSize === -1) {
+                    container.current?.addEventListener(SCROLL_END, this._onScrollEndHandler);
+                    container.current?.addEventListener(SCROLL, this._onScrollHandler);
+                    return;
+                }
+
                 trackBox.clearDelta();
 
                 if (container) {
@@ -783,6 +823,12 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
 
                     const _scrollSize = trackBox.getItemPosition(id, stickyMap, { ...opts, scrollSize: actualScrollSize, fromItemId: id }),
                         notChanged = actualScrollSize === _scrollSize;
+
+                    if (_scrollSize === -1) {
+                        container.current?.addEventListener(SCROLL_END, this._onScrollEndHandler);
+                        container.current?.addEventListener(SCROLL, this._onScrollHandler);
+                        return;
+                    }
 
                     if (!notChanged || iteration < MAX_SCROLL_TO_ITERATIONS) {
                         this.disposeScrollToRepeatExecutionTimeout();
@@ -926,41 +972,6 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         const latItem = items?.[items.length > 0 ? items.length - 1 : 0];
         if (latItem) {
             this.scrollTo(latItem.id, behavior);
-        }
-    }
-
-    private _onContainerScrollHandler(e: Event) {
-        const containerEl = this._$containerRef, list = this._$listRef?.current;
-        if (containerEl && containerEl.current && list) {
-            const scrollSize = (this._isVertical ? containerEl.current.scrollTop : containerEl.current.scrollLeft);
-            this._trackBox.deltaDirection = this._scrollSize > scrollSize ? -1 : this._scrollSize < scrollSize ? 1 : 0;
-            const event = new ScrollEvent({
-                direction: this._trackBox.scrollDirection, container: containerEl.current,
-                list, delta: this._trackBox.delta,
-                scrollDelta: this._trackBox.scrollDelta, isVertical: this._isVertical,
-            });
-
-            if (this._onScroll !== undefined) {
-                this._onScroll(event);
-            }
-        }
-    }
-
-    private _onContainerScrollEndHandler(e: Event) {
-        const containerEl = this._$containerRef, list = this._$listRef?.current;
-        if (containerEl && containerEl.current && list) {
-            const scrollSize = (this._isVertical ? containerEl.current.scrollTop : containerEl.current.scrollLeft);
-            this._trackBox.deltaDirection = this._scrollSize > scrollSize ? -1 : 0;
-
-            const event = new ScrollEvent({
-                direction: this._trackBox.scrollDirection, container: containerEl.current,
-                list, delta: this._trackBox.delta,
-                scrollDelta: this._trackBox.scrollDelta, isVertical: this._isVertical,
-            });
-
-            if (this._onScrollEnd !== undefined) {
-                this._onScrollEnd(event);
-            }
         }
     }
 

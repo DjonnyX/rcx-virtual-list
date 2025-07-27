@@ -13,6 +13,18 @@
     height: 320px;
 }
 
+.rcxvl.horizontal .ngvl__list {
+    display: inline-flex;
+}
+
+.rcxvl.horizontal .ngvl__scroller {
+    overflow: auto hidden;
+}
+
+.rcxvl.vertical .ngvl__scroller {
+    overflow: hidden auto;
+}
+
 .rcxvl__list-snapper {
     pointer-events: none;
     position: absolute;
@@ -35,6 +47,16 @@
     margin: 0;
     width: 100%;
     height: 100%;
+    overflow: clip;
+}
+
+.ngvl__list-snapper {
+    pointer-events: none;
+    position: absolute;
+    list-style: none;
+    left: 0;
+    top: 0;
+    z-index: 1;
 }
 
 .rcxvl__item {
