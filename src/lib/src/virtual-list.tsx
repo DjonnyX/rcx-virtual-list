@@ -11,7 +11,7 @@ import {
     DEFAULT_SNAPPING_METHOD, HEIGHT_PROP_NAME, LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME,
     TRACK_BY_PROPERTY_NAME, WIDTH_PROP_NAME,
 } from './const';
-import { debounce, isDirection, ScrollEvent, toggleClassName, TrackBox } from './utils';
+import { debounce, isDirection, ScrollEvent, TrackBox } from './utils';
 import { Direction, Directions, SnappingMethod } from './enums';
 import { VirtualListItem } from './components';
 import { IGetItemPositionOptions, IUpdateCollectionOptions, TRACK_BOX_CHANGE_EVENT_NAME } from './utils/trackBox';
@@ -484,8 +484,6 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
     }
 
     private _onScrollEndHandler = (e?: Event) => {
-        // this.debouncedStopJumpingScroll.execute();
-
         this.disposeScrollToRepeatExecutionTimeout();
 
         const container = this._$containerRef?.current;
@@ -799,6 +797,13 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
                     },
                     scrollSize = trackBox.getItemPosition(id, stickyMap, opts),
                     params: ScrollToOptions = { [isVertical ? TOP_PROP_NAME : LEFT_PROP_NAME]: scrollSize, behavior };
+
+                if (scrollSize === -1) {
+                    container.current?.addEventListener(SCROLL_END, this._onScrollEndHandler);
+                    container.current?.addEventListener(SCROLL, this._onScrollHandler);
+                    return;
+                }
+
                 trackBox.clearDelta();
 
                 if (container) {
@@ -818,6 +823,12 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
 
                     const _scrollSize = trackBox.getItemPosition(id, stickyMap, { ...opts, scrollSize: actualScrollSize, fromItemId: id }),
                         notChanged = actualScrollSize === _scrollSize;
+
+                    if (_scrollSize === -1) {
+                        container.current?.addEventListener(SCROLL_END, this._onScrollEndHandler);
+                        container.current?.addEventListener(SCROLL, this._onScrollHandler);
+                        return;
+                    }
 
                     if (!notChanged || iteration < MAX_SCROLL_TO_ITERATIONS) {
                         this.disposeScrollToRepeatExecutionTimeout();

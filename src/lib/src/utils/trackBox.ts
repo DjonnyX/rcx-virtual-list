@@ -1,4 +1,4 @@
-import { IRenderVirtualListCollection } from "../models/render-collection.model";
+import { IRenderVirtualListCollection, } from "../models/render-collection.model";
 import { IRenderVirtualListItem } from "../models/render-item.model";
 import { Id } from "../types/id";
 import { CacheMap, CMap } from "./cacheMap";
@@ -64,20 +64,20 @@ export interface IGetItemPositionOptions<I extends { id: Id }, C extends Array<I
 export interface IUpdateCollectionOptions<I extends { id: Id }, C extends Array<I>>
     extends Omit<IRecalculateMetricsOptions<I, C>, 'collection' | 'previousTotalSize' | 'crudDetected' | 'deletedItemsMap'> { }
 
-type CacheMapEvents = typeof TRACK_BOX_CHANGE_EVENT_NAME;
+export type CacheMapEvents = typeof TRACK_BOX_CHANGE_EVENT_NAME;
 
-type OnChangeEventListener = (version: number) => void;
+export type OnChangeEventListener = (version: number) => void;
 
-type CacheMapListeners = OnChangeEventListener;
+export type CacheMapListeners = OnChangeEventListener;
 
-enum ItemDisplayMethods {
+export enum ItemDisplayMethods {
     CREATE,
     UPDATE,
     DELETE,
     NOT_CHANGED,
 }
 
-interface IUpdateCollectionReturns {
+export interface IUpdateCollectionReturns {
     displayItems: IRenderVirtualListCollection;
     totalSize: number;
     delta: number;
@@ -90,8 +90,10 @@ interface IUpdateCollectionReturns {
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
-export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods }, CacheMapEvents, CacheMapListeners> {
-    protected _tracker!: Tracker<IRenderVirtualListItem, any>;
+export class TrackBox<C extends IVirtualListItemMethods = any>
+    extends CacheMap<Id, ISize & { method?: ItemDisplayMethods }, CacheMapEvents, CacheMapListeners> {
+
+    protected _tracker!: Tracker<C>;
 
     protected _items: IRenderVirtualListCollection | null | undefined;
 
@@ -103,9 +105,9 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         this._items = v;
     }
 
-    protected _displayComponents!: Array<React.RefObject<IVirtualListItemMethods | null>>;
+    protected _displayComponents: Array<React.RefObject<C>> | null | undefined;
 
-    set displayComponents(v: Array<React.RefObject<IVirtualListItemMethods | null>>) {
+    set displayComponents(v: Array<React.RefObject<C>> | null | undefined) {
         if (this._displayComponents === v) {
             return;
         }
@@ -113,9 +115,9 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         this._displayComponents = v;
     }
 
-    protected _snapedDisplayComponent: React.RefObject<IVirtualListItemMethods | null> | null | undefined;
+    protected _snapedDisplayComponent: React.RefObject<C> | null | undefined;
 
-    set snapedDisplayComponent(v: React.RefObject<IVirtualListItemMethods | null> | null | undefined) {
+    set snapedDisplayComponent(v: React.RefObject<C> | null | undefined) {
         if (this._snapedDisplayComponent === v) {
             return;
         }
@@ -160,11 +162,11 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         return v;
     }
 
-    private _previousCollection: Array<{ id: Id; }> | null | undefined;
+    protected _previousCollection: Array<{ id: Id; }> | null | undefined;
 
-    private _deletedItemsMap: { [index: number]: ISize } = {};
+    protected _deletedItemsMap: { [index: number]: ISize } = {};
 
-    private _crudDetected = false;
+    protected _crudDetected = false;
     get crudDetected() { return this._crudDetected; }
 
     protected override fireChangeIfNeed() {
@@ -173,7 +175,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         }
     }
 
-    private _previousTotalSize = 0;
+    protected _previousTotalSize = 0;
 
     protected _scrollDelta: number = 0;
     get scrollDelta() { return this._scrollDelta; }
@@ -335,7 +337,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
     /**
      * Calculates the position of an element based on the given scrollSize
      */
-    private getElementFromStart<I extends { id: Id }, C extends Array<I>>(scrollSize: number, collection: C, map: CMap<Id, ISize>, typicalItemSize: number,
+    protected getElementFromStart<I extends { id: Id }, C extends Array<I>>(scrollSize: number, collection: C, map: CMap<Id, ISize>, typicalItemSize: number,
         isVertical: boolean): I | undefined {
         const sizeProperty = isVertical ? HEIGHT_PROP_NAME : WIDTH_PROP_NAME;
         let offset = 0;
@@ -359,7 +361,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
     /**
      * Calculates the entry into the overscroll area and returns the number of overscroll elements
      */
-    private getElementNumToEnd<I extends { id: Id }, C extends Array<I>>(i: number, collection: C, map: CMap<Id, ISize>, typicalItemSize: number,
+    protected getElementNumToEnd<I extends { id: Id }, C extends Array<I>>(i: number, collection: C, map: CMap<Id, ISize>, typicalItemSize: number,
         size: number, isVertical: boolean, indexOffset: number = 0): { num: number, offset: number } {
         const sizeProperty = isVertical ? HEIGHT_PROP_NAME : WIDTH_PROP_NAME;
         let offset = 0, num = 0;
@@ -477,7 +479,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
 
                 if (isFromId) {
                     if (itemById === undefined) {
-                        if (id !== fromItemId && stickyMap && stickyMap[id] > 0) {
+                        if (id !== fromItemId && stickyMap && stickyMap[id] === 1) {
                             stickyComponentSize = componentSize;
                             stickyCollectionItem = collectionItem;
                         }
@@ -594,7 +596,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
                     }
 
                     if (deletedItemsMap.hasOwnProperty(i)) {
-                        const bounds = deletedItemsMap[i], size = bounds[sizeProperty] ?? typicalItemSize;
+                        const bounds = deletedItemsMap[i], size = bounds?.[sizeProperty] ?? typicalItemSize;
                         if (y < scrollSize - size) {
                             leftSizeOfDeletedItems += size;
                         }
@@ -695,9 +697,12 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
     protected generateDisplayCollection<I extends { id: Id }, C extends Array<I>>(items: C, stickyMap: IVirtualListStickyMap,
         metrics: IMetrics): IRenderVirtualListCollection {
         const {
+            width,
+            height,
             normalizedItemWidth,
             normalizedItemHeight,
             dynamicSize,
+            itemsOnDisplayLength,
             itemsFromStartToScrollEnd,
             isVertical,
             renderItems: renderItemsLength,
@@ -712,21 +717,26 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         } = metrics,
             displayItems: IRenderVirtualListCollection = [];
         if (items.length) {
-            const actualSnippedPosition = snippedPos, isSnappingMethodAdvanced = this.isSnappingMethodAdvanced;
+            const actualSnippedPosition = snippedPos, isSnappingMethodAdvanced = this.isSnappingMethodAdvanced,
+                boundsSize = isVertical ? height : width, actualEndSnippedPosition = boundsSize;
             let pos = startPosition,
                 renderItems = renderItemsLength,
                 stickyItem: IRenderVirtualListItem | undefined, nextSticky: IRenderVirtualListItem | undefined, stickyItemIndex = -1,
-                stickyItemSize = 0;
+                stickyItemSize = 0, endStickyItem: IRenderVirtualListItem | undefined, nextEndSticky: IRenderVirtualListItem | undefined,
+                endStickyItemIndex = -1, endStickyItemSize = 0;
 
             if (snap) {
                 for (let i = Math.min(itemsFromStartToScrollEnd > 0 ? itemsFromStartToScrollEnd : 0, totalLength - 1); i >= 0; i--) {
+                    if (!items[i]) {
+                        continue;
+                    }
                     const id = items[i].id, sticky = stickyMap[id], size = dynamicSize ? this.get(id)?.[sizeProperty] || typicalItemSize : typicalItemSize;
-                    if (sticky > 0) {
+                    if (sticky === 1) {
                         const measures = {
                             x: isVertical ? 0 : actualSnippedPosition,
                             y: isVertical ? actualSnippedPosition : 0,
-                            width: normalizedItemWidth,
-                            height: normalizedItemHeight,
+                            width: isVertical ? normalizedItemWidth : size,
+                            height: isVertical ? size : normalizedItemHeight,
                             delta: 0,
                         }, config = {
                             isVertical,
@@ -736,6 +746,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
                             snappedOut: false,
                             dynamic: dynamicSize,
                             isSnappingMethodAdvanced,
+                            zIndex: '1',
                         };
 
                         const itemData: I = items[i];
@@ -750,6 +761,42 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
                 }
             }
 
+            if (snap) {
+                const startIndex = itemsFromStartToScrollEnd + itemsOnDisplayLength - 1;
+                for (let i = Math.min(startIndex, totalLength > 0 ? totalLength - 1 : 0), l = totalLength; i < l; i++) {
+                    const id = items[i].id, sticky = stickyMap[id], size = dynamicSize
+                        ? this.get(id)?.[sizeProperty] || typicalItemSize
+                        : typicalItemSize;
+                    if (sticky === 2) {
+                        const w = isVertical ? normalizedItemWidth : size, h = isVertical ? size : normalizedItemHeight, measures = {
+                            x: isVertical ? 0 : actualEndSnippedPosition - w,
+                            y: isVertical ? actualEndSnippedPosition - h : 0,
+                            width: w,
+                            height: h,
+                            delta: 0,
+                        }, config = {
+                            isVertical,
+                            sticky,
+                            snap,
+                            snapped: true,
+                            snappedOut: false,
+                            dynamic: dynamicSize,
+                            isSnappingMethodAdvanced,
+                            zIndex: '1',
+                        };
+
+                        const itemData: I = items[i];
+
+                        endStickyItem = { id, measures, data: itemData, config };
+                        endStickyItemIndex = i;
+                        endStickyItemSize = size;
+
+                        displayItems.push(endStickyItem);
+                        break;
+                    }
+                }
+            }
+
             let i = startIndex;
 
             while (renderItems > 0) {
@@ -759,13 +806,13 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
 
                 const id = items[i].id, size = dynamicSize ? this.get(id)?.[sizeProperty] || typicalItemSize : typicalItemSize;
 
-                if (id !== stickyItem?.id) {
-                    const snapped = snap && stickyMap[id] > 0 && pos <= scrollSize,
+                if (id !== stickyItem?.id && id !== endStickyItem?.id) {
+                    const snapped = snap && (stickyMap[id] === 1 && pos <= scrollSize || stickyMap[id] === 2 && pos >= scrollSize + boundsSize - size),
                         measures = {
-                            x: isVertical ? 0 : pos,
-                            y: isVertical ? pos : 0,
-                            width: normalizedItemWidth,
-                            height: normalizedItemHeight,
+                            x: isVertical ? stickyMap[id] === 1 ? 0 : boundsSize - size : pos,
+                            y: isVertical ? pos : stickyMap[id] === 2 ? boundsSize - size : 0,
+                            width: isVertical ? normalizedItemWidth : size,
+                            height: isVertical ? size : normalizedItemHeight,
                             delta: 0,
                         }, config = {
                             isVertical,
@@ -775,17 +822,30 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
                             snappedOut: false,
                             dynamic: dynamicSize,
                             isSnappingMethodAdvanced,
+                            zIndex: '0',
                         };
+
+                    if (snapped) {
+                        config.zIndex = '2';
+                    }
 
                     const itemData: I = items[i];
 
                     const item: IRenderVirtualListItem = { id, measures, data: itemData, config };
-                    if (!nextSticky && stickyItemIndex < i && stickyMap[id] > 0 && pos <= scrollSize + size + stickyItemSize) {
+                    if (!nextSticky && stickyItemIndex < i && stickyMap[id] === 1 && (pos <= scrollSize + size + stickyItemSize)) {
                         item.measures.x = isVertical ? 0 : snapped ? actualSnippedPosition : pos;
                         item.measures.y = isVertical ? snapped ? actualSnippedPosition : pos : 0;
                         nextSticky = item;
                         nextSticky.config.snapped = snapped;
-                        nextSticky.measures.delta = isVertical ? item.measures.y - scrollSize : item.measures.x - scrollSize;
+                        nextSticky.measures.delta = isVertical ? (item.measures.y - scrollSize) : (item.measures.x - scrollSize);
+                        nextSticky.config.zIndex = '3';
+                    } else if (!nextEndSticky && endStickyItemIndex > i && stickyMap[id] === 2 && (pos >= scrollSize + boundsSize - size - endStickyItemSize)) {
+                        item.measures.x = isVertical ? 0 : snapped ? actualEndSnippedPosition - size : pos;
+                        item.measures.y = isVertical ? snapped ? actualEndSnippedPosition - size : pos : 0;
+                        nextEndSticky = item;
+                        nextEndSticky.config.zIndex = '3';
+                        nextEndSticky.config.snapped = snapped;
+                        nextEndSticky.measures.delta = isVertical ? (item.measures.y - scrollSize) : (item.measures.x - scrollSize);
                     }
 
                     displayItems.push(item);
@@ -810,6 +870,19 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
                     nextSticky.measures.delta = isVertical ? nextSticky.measures.y - scrollSize : nextSticky.measures.x - scrollSize;
                 }
             }
+
+            if (nextEndSticky && endStickyItem && nextEndSticky.measures[axis] >= scrollSize + boundsSize - endStickyItemSize - nextEndSticky.measures[sizeProperty]) {
+                if (nextEndSticky.measures[axis] < scrollSize + boundsSize - endStickyItemSize) {
+                    endStickyItem.measures[axis] = nextEndSticky.measures[axis] + nextEndSticky.measures[sizeProperty];
+                    endStickyItem.config.snapped = nextEndSticky.config.snapped = false;
+                    endStickyItem.config.snappedOut = true;
+                    endStickyItem.config.sticky = 2;
+                    endStickyItem.measures.delta = isVertical ? endStickyItem.measures.y - scrollSize : endStickyItem.measures.x - scrollSize;
+                } else {
+                    nextEndSticky.config.snapped = true;
+                    nextEndSticky.measures.delta = isVertical ? nextEndSticky.measures.y - scrollSize : nextEndSticky.measures.x - scrollSize;
+                }
+            }
         }
         return displayItems;
     }
@@ -829,7 +902,7 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         this._tracker.displayObjectIndexMapById = v;
     }
 
-    untrackComponentByIdProperty(component?: React.RefObject<IVirtualListItemMethods | null> | undefined) {
+    untrackComponentByIdProperty(component?: C | undefined) {
         this._tracker.untrackComponentByIdProperty(component);
     }
 
@@ -846,12 +919,13 @@ export class TrackBox extends CacheMap<Id, ISize & { method?: ItemDisplayMethods
         }
 
         for (let i = 0, l = this._displayComponents.length; i < l; i++) {
-            const component = this._displayComponents[i], itemId = component.current?.itemId;
-            if (itemId === undefined) {
-                continue;
-            }
-            const bounds = component.current?.getBounds();
-            if (bounds) {
+            const component = this._displayComponents[i];
+            if (component.current) {
+                const itemId = component.current.itemId;
+                if (itemId === undefined) {
+                    continue;
+                }
+                const bounds = component.current.getBounds();
                 this.set(itemId, bounds);
             }
         }
