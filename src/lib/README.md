@@ -51,7 +51,7 @@ function App() {
   };
 
   return <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory(onItemClick)} items={horizontalItems}
-    itemSize={54} itemsOffset={50} />
+    itemSize={54} bufferSize={50} />
 }
 ```
 
@@ -96,7 +96,7 @@ function App() {
   const [horizontalGroupItemsStickyMap] = useState({ ...HORIZONTAL_GROUP_ITEMS_STICKY_MAP });
 
   return <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalGroupItemRendererFactory(onItemClick)}
-            items={horizontalGroupItems} itemSize={54} itemsOffset={50} snap={true} stickyMap={horizontalGroupItemsStickyMap} />
+            items={horizontalGroupItems} itemSize={54} bufferSize={50} snap={true} stickyMap={horizontalGroupItemsStickyMap} />
 }
 ```
 
@@ -130,7 +130,7 @@ function App() {
   };
 
   return <VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
-            items={verticalItems} itemSize={40} itemsOffset={50} />
+            items={verticalItems} itemSize={40} bufferSize={50} />
 }
 ```
 
@@ -178,7 +178,7 @@ function App() {
     console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
   };
 
-  return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} itemsOffset={50}
+  return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} bufferSize={50}
             stickyMap={groupItemsStickyMap} itemSize={40} />
 }
 ```
@@ -225,7 +225,7 @@ function App() {
     console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
   };
 
-  return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} itemsOffset={50}
+  return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} bufferSize={50}
             stickyMap={groupItemsStickyMap} itemSize={40} snap={true} />
 }
 ```
@@ -276,7 +276,7 @@ function App() {
       <button className="scroll-to__button" onClick={onButtonScrollToIdClickHandler}>Scroll</button>
     </div>
     <VirtualList ref={$listContainerRef} className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
-      items={verticalItems} itemSize={40} itemsOffset={50} />
+      items={verticalItems} itemSize={40} bufferSize={50} />
   </>
 }
 ```
@@ -356,7 +356,7 @@ function App() {
 
 function App () {
   return <VirtualList className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory(onItemClick)}
-            itemsOffset={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
+            bufferSize={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
 }
 ```
 
@@ -432,7 +432,8 @@ Inputs
 | id | number | Readonly. Returns the unique identifier of the component. | 
 | items | [IVirtualListCollection](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/collection.model.ts) | Collection of list items. The collection of elements must be immutable. |
 | itemSize | number? = 24 | If direction = 'vertical', then the height of a typical element. If direction = 'horizontal', then the width of a typical element. Ignored if the dynamicSize property is true. |
-| itemsOffset | number? = 2 | Number of elements outside the scope of visibility. Default value is 2. |
+| bufferSize | number? = 2 | Number of elements outside the scope of visibility. Default value is 2. |
+| maxBufferSize | number? = 100 | Maximum number of elements outside the scope of visibility. Default value is 100. If maxBufferSize is set to be greater than bufferSize, then adaptive buffer mode is enabled. The greater the scroll size, the more elements are allocated for rendering. |
 | itemRenderer | [VirtualListItemRenderer](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/virtual-list-item-renderer.model.ts) | Rendering element factory. |
 | stickyMap | [IVirtualListStickyMap?](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/sticky-map.model.ts) | Dictionary zIndex by id of the list element. If the value is not set or equal to 0, then a simple element is displayed, if the value is greater than 0, then the sticky position mode is enabled for the element. |
 | snap | boolean? = false | Determines whether elements will snap. Default value is "false". |

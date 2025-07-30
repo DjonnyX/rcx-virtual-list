@@ -213,7 +213,7 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Port of <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.0.12</span></div>
+        <div className="version"><span>v 1.0.13</span></div>
         <div className="version"><span>React v 16.X.X - v 19.X.X</span></div>
       </div>
 
@@ -221,7 +221,7 @@ function App() {
         <div className="vl-section__container">
           <h2>Horizontal list</h2>
           <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory(onItemClick)} items={horizontalItems}
-            itemSize={54} itemsOffset={50} />
+            itemSize={54} bufferSize={50} />
         </div>
       </div>
 
@@ -229,7 +229,7 @@ function App() {
         <div className="vl-section__container">
           <h2>Horizontal group list</h2>
           <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalGroupItemRendererFactory(onItemClick)}
-            items={horizontalGroupItems} itemSize={54} itemsOffset={50} snap={true} stickyMap={horizontalGroupItemsStickyMap} />
+            items={horizontalGroupItems} itemSize={54} bufferSize={50} snap={true} stickyMap={horizontalGroupItemsStickyMap} />
         </div>
       </div>
 
@@ -237,7 +237,7 @@ function App() {
         <div className="vl-section__container">
           <h2>Vertical virtual list</h2>
           <VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
-            items={verticalItems} itemSize={40} itemsOffset={50} />
+            items={verticalItems} itemSize={40} bufferSize={50} />
         </div>
       </div>
 
@@ -250,14 +250,14 @@ function App() {
             <button className="scroll-to__button" onClick={onButtonScrollToIdClickHandler}>Scroll</button>
           </div>
           <VirtualList ref={$listContainerRef} className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
-            items={verticalItems1} itemSize={40} itemsOffset={50} />
+            items={verticalItems1} itemSize={40} bufferSize={50} />
         </div>
       </div>
 
       <div className="vl-section">
         <div className="vl-section__container">
           <h2>Virtual group list</h2>
-          <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} itemsOffset={50}
+          <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} bufferSize={50}
             stickyMap={groupItemsStickyMap} itemSize={40} />
         </div>
       </div>
@@ -265,7 +265,7 @@ function App() {
       <div className="vl-section">
         <div className="vl-section__container">
           <h2>Virtual group list (with snapping)</h2>
-          <VirtualList className="list" items={groupItems1} itemRenderer={groupItemRendererFactory(onItemClick)} itemsOffset={50}
+          <VirtualList className="list" items={groupItems1} itemRenderer={groupItemRendererFactory(onItemClick)} bufferSize={20} maxBufferSize={200}
             stickyMap={groupItemsStickyMap1} itemSize={40} snap={true} />
         </div>
       </div>
@@ -279,7 +279,7 @@ function App() {
             <button className="scroll-to__button" onClick={onButtonScrollDLToIdClickHandler}>Scroll</button>
           </div>
           <VirtualList ref={$listContainerRef1} className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory(onItemClick)}
-            itemsOffset={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
+            bufferSize={20} maxBufferSize={200} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
         </div>
       </div >
 

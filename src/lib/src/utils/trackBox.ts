@@ -7,6 +7,7 @@ import { ISize } from "../types";
 import { HEIGHT_PROP_NAME, WIDTH_PROP_NAME, X_PROP_NAME, Y_PROP_NAME } from "../const";
 import { IVirtualListStickyMap } from "../models";
 import { IVirtualListItemMethods } from "../models/virtual-list-item-ref-methods.model";
+import { bufferInterpolation } from "./buffer-interpolation";
 
 export const TRACK_BOX_CHANGE_EVENT_NAME = 'change';
 
@@ -40,6 +41,7 @@ export interface IMetrics {
     totalLength: number;
     totalSize: number;
     typicalItemSize: number;
+    isFromItemIdFound: boolean;
 }
 
 export interface IRecalculateMetricsOptions<I extends { id: Id }, C extends Array<I>> {
@@ -47,7 +49,8 @@ export interface IRecalculateMetricsOptions<I extends { id: Id }, C extends Arra
     collection: C;
     isVertical: boolean;
     itemSize: number;
-    itemsOffset: number;
+    bufferSize: number;
+    maxBufferSize: number;
     dynamicSize: boolean;
     scrollSize: number;
     snap: boolean;
@@ -83,6 +86,10 @@ export interface IUpdateCollectionReturns {
     delta: number;
     crudDetected: boolean;
 }
+
+const DEFAULT_BUFFER_EXTREMUM_THRESHOLD = 15,
+    DEFAULT_MAX_BUFFER_SEQUENCE_LENGTH = 30,
+    DEFAULT_RESET_BUFFER_SIZE_TIMEOUT = 10000;
 
 /**
  * An object that performs tracking, calculations and caching.
@@ -179,6 +186,25 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
 
     protected _scrollDelta: number = 0;
     get scrollDelta() { return this._scrollDelta; }
+
+    isAdaptiveBuffer = true;
+
+    protected _bufferSequenceExtraThreshold = DEFAULT_BUFFER_EXTREMUM_THRESHOLD;
+
+    protected _maxBufferSequenceLength = DEFAULT_MAX_BUFFER_SEQUENCE_LENGTH;
+
+    protected _bufferSizeSequence: Array<number> = [];
+
+    protected _bufferSize: number = 0;
+    get bufferSize() { return this._bufferSize; }
+
+    protected _defaultBufferSize: number = 0;
+
+    protected _maxBufferSize: number = this._defaultBufferSize;
+
+    protected _resetBufferSizeTimeout: number = DEFAULT_RESET_BUFFER_SIZE_TIMEOUT;
+
+    protected _resetBufferSizeTimer: number | undefined;
 
     protected override lifeCircle() {
         this.fireChangeIfNeed();
@@ -283,14 +309,17 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
     getItemPosition<I extends { id: Id }, C extends Array<I>>(id: Id, stickyMap: IVirtualListStickyMap,
         options: IGetItemPositionOptions<I, C>): number {
         const opt = { fromItemId: id, stickyMap, ...options };
-        const { scrollSize } = this.recalculateMetrics({
+        this._defaultBufferSize = opt.bufferSize;
+        this._maxBufferSize = opt.maxBufferSize;
+
+        const { scrollSize, isFromItemIdFound } = this.recalculateMetrics({
             ...opt,
             dynamicSize: this._crudDetected || opt.dynamicSize,
             previousTotalSize: this._previousTotalSize,
             crudDetected: this._crudDetected,
             deletedItemsMap: this._deletedItemsMap,
         });
-        return scrollSize;
+        return isFromItemIdFound ? scrollSize : -1;
     }
 
     /**
@@ -302,6 +331,8 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
         if (opt.dynamicSize) {
             this.cacheElements();
         }
+        this._defaultBufferSize = opt.bufferSize;
+        this._maxBufferSize = opt.maxBufferSize;
 
         const metrics = this.recalculateMetrics({
             ...opt,
@@ -312,6 +343,8 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
         });
 
         this._delta += metrics.delta;
+
+        this.updateAdaptiveBufferParams(metrics, items.length);
 
         this._previousTotalSize = metrics.totalSize;
 
@@ -332,6 +365,36 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
      */
     getNearestItem<I extends { id: Id }, C extends Array<I>>(scrollSize: number, items: C, itemSize: number, isVertical: boolean): I | undefined {
         return this.getElementFromStart(scrollSize, items, this._map, itemSize, isVertical);
+    }
+
+    protected _previousScrollSize = 0;
+
+    protected updateAdaptiveBufferParams(metrics: IMetrics, totalItemsLength: number) {
+        this.disposeClearBufferSizeTimer();
+
+        const scrollSize = metrics.scrollSize + this._delta, delta = Math.abs(this._previousScrollSize - scrollSize);
+        this._previousScrollSize = scrollSize;
+        const bufferRawSize = Math.min(Math.floor(delta / metrics.typicalItemSize) * 5, totalItemsLength),
+            minBufferSize = bufferRawSize < this._defaultBufferSize ? this._defaultBufferSize : bufferRawSize,
+            bufferValue = minBufferSize > this._maxBufferSize ? this._maxBufferSize : minBufferSize;
+
+        this._bufferSize = bufferInterpolation(this._bufferSize, this._bufferSizeSequence, bufferValue, {
+            extremumThreshold: this._bufferSequenceExtraThreshold,
+            bufferSize: this._maxBufferSequenceLength,
+        });
+
+        this.startResetBufferSizeTimer();
+    }
+
+    protected startResetBufferSizeTimer() {
+        this._resetBufferSizeTimer = setTimeout(() => {
+            this._bufferSize = this._defaultBufferSize;
+            this._bufferSizeSequence = [];
+        }, this._resetBufferSizeTimeout) as unknown as number;
+    }
+
+    protected disposeClearBufferSizeTimer() {
+        clearTimeout(this._resetBufferSizeTimer);
     }
 
     /**
@@ -388,18 +451,17 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
      */
     protected recalculateMetrics<I extends { id: Id }, C extends Array<I>>(options: IRecalculateMetricsOptions<I, C>): IMetrics {
         const { fromItemId, bounds, collection, dynamicSize, isVertical, itemSize,
-            itemsOffset, scrollSize, snap, stickyMap, enabledBufferOptimization,
+            bufferSize: minBufferSize, scrollSize, snap, stickyMap, enabledBufferOptimization,
             previousTotalSize, crudDetected, deletedItemsMap } = options as IRecalculateMetricsOptions<I, C> & {
                 stickyMap: IVirtualListStickyMap,
             };
 
-        const { width, height } = bounds, sizeProperty = isVertical ? HEIGHT_PROP_NAME : WIDTH_PROP_NAME, size = isVertical ? height : width,
-            totalLength = collection.length, typicalItemSize = itemSize,
+        const bufferSize = Math.max(minBufferSize, this._bufferSize),
+            { width, height } = bounds, sizeProperty = isVertical ? HEIGHT_PROP_NAME : WIDTH_PROP_NAME,
+            size = isVertical ? height : width, totalLength = collection.length, typicalItemSize = itemSize,
             w = isVertical ? width : typicalItemSize, h = isVertical ? typicalItemSize : height,
-            map = this._map, snapshot = this._snapshot,
-            checkOverscrollItemsLimit = Math.ceil(size / typicalItemSize),
-            snippedPos = Math.floor(scrollSize),
-            leftItemsWeights: Array<number> = [],
+            map = this._map, snapshot = this._snapshot, checkOverscrollItemsLimit = Math.ceil(size / typicalItemSize),
+            snippedPos = Math.floor(scrollSize), leftItemsWeights: Array<number> = [],
             isFromId = fromItemId !== undefined && (typeof fromItemId === 'number' && fromItemId > -1)
                 || (typeof fromItemId === 'string' && fromItemId > '-1');
 
@@ -408,21 +470,21 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
             switch (this.scrollDirection) {
                 case 1: {
                     leftItemsOffset = 0;
-                    rightItemsOffset = itemsOffset;
+                    rightItemsOffset = bufferSize;
                     break;
                 }
                 case -1: {
-                    leftItemsOffset = itemsOffset;
+                    leftItemsOffset = bufferSize;
                     rightItemsOffset = 0;
                     break;
                 }
                 case 0:
                 default: {
-                    leftItemsOffset = rightItemsOffset = itemsOffset;
+                    leftItemsOffset = rightItemsOffset = bufferSize;
                 }
             }
         } else {
-            leftItemsOffset = rightItemsOffset = itemsOffset;
+            leftItemsOffset = rightItemsOffset = bufferSize;
         }
 
         let itemsFromStartToScrollEnd: number = -1, itemsFromDisplayEndToOffsetEnd = 0, itemsFromStartToDisplayEnd = -1,
@@ -439,7 +501,8 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
             isTargetInOverscroll: boolean = false,
             actualScrollSize = itemByIdPos,
             totalSize = 0,
-            startIndex;
+            startIndex: number,
+            isFromItemIdFound = false;
 
         // If the list is dynamic or there are new elements in the collection, then it switches to the long algorithm.
         if (dynamicSize) {
@@ -485,6 +548,7 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
                         }
 
                         if (id === fromItemId) {
+                            isFromItemIdFound = true;
                             targetDisplayItemIndex = i;
                             if (stickyCollectionItem && stickyMap) {
                                 const { num } = this.getElementNumToEnd(i, collection, map, typicalItemSize, size, isVertical);
@@ -623,9 +687,9 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
             }
             itemsFromStartToScrollEnd = Math.floor(scrollSize / typicalItemSize);
             itemsFromStartToDisplayEnd = Math.ceil((scrollSize + size) / typicalItemSize);
-            leftItemLength = Math.min(itemsFromStartToScrollEnd, itemsOffset);
-            rightItemLength = itemsFromStartToDisplayEnd + itemsOffset > totalLength
-                ? totalLength - itemsFromStartToDisplayEnd : itemsOffset;
+            leftItemLength = Math.min(itemsFromStartToScrollEnd, bufferSize);
+            rightItemLength = itemsFromStartToDisplayEnd + bufferSize > totalLength
+                ? totalLength - itemsFromStartToDisplayEnd : bufferSize;
             leftItemsWeight = leftItemLength * typicalItemSize;
             rightItemsWeight = rightItemLength * typicalItemSize;
             leftHiddenItemsWeight = itemsFromStartToScrollEnd * typicalItemSize;
@@ -673,6 +737,7 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
             totalLength,
             totalSize,
             typicalItemSize,
+            isFromItemIdFound,
         };
 
         return metrics;
@@ -933,6 +998,8 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
 
     override dispose() {
         super.dispose();
+
+        this.disposeClearBufferSizeTimer();
 
         if (this._tracker) {
             this._tracker.dispose();
