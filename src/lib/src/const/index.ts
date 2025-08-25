@@ -82,3 +82,17 @@ export const SCROLL_END = 'scrollend';
 export const CLASS_LIST_VERTICAL = 'vertical';
 
 export const CLASS_LIST_HORIZONTAL = 'horizontal';
+
+// styles
+
+export const CLASS_ITEM = 'rcxvl__item';
+
+export const CLASS_DEFAULT_ITEM = 'rcxvl__item-container';
+
+export const CLASS_ITEM_ODD = ' odd';
+
+export const CLASS_ITEM_EVEN = ' even';
+
+export const CLASS_ITEM_SNAPPED = ' snapped';
+
+export const CLASS_ITEM_SNAPPED_OUT = ' snapped-out';

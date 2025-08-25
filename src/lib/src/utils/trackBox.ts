@@ -797,26 +797,29 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
                     }
                     const id = items[i].id, sticky = stickyMap[id], size = dynamicSize ? this.get(id)?.[sizeProperty] || typicalItemSize : typicalItemSize;
                     if (sticky === 1) {
-                        const measures = {
-                            x: isVertical ? 0 : actualSnippedPosition,
-                            y: isVertical ? actualSnippedPosition : 0,
-                            width: isVertical ? normalizedItemWidth : size,
-                            height: isVertical ? size : normalizedItemHeight,
-                            delta: 0,
-                        }, config = {
-                            isVertical,
-                            sticky,
-                            snap,
-                            snapped: true,
-                            snappedOut: false,
-                            dynamic: dynamicSize,
-                            isSnappingMethodAdvanced,
-                            zIndex: '1',
-                        };
+                        const isOdd = i % 2 != 0,
+                            measures = {
+                                x: isVertical ? 0 : actualSnippedPosition,
+                                y: isVertical ? actualSnippedPosition : 0,
+                                width: isVertical ? normalizedItemWidth : size,
+                                height: isVertical ? size : normalizedItemHeight,
+                                delta: 0,
+                            }, config = {
+                                odd: isOdd,
+                                even: !isOdd,
+                                isVertical,
+                                sticky,
+                                snap,
+                                snapped: true,
+                                snappedOut: false,
+                                dynamic: dynamicSize,
+                                isSnappingMethodAdvanced,
+                                zIndex: '1',
+                            };
 
                         const itemData: I = items[i];
 
-                        stickyItem = { id, measures, data: itemData, config };
+                        stickyItem = { index: i, id, measures, data: itemData, config };
                         stickyItemIndex = i;
                         stickyItemSize = size;
 
@@ -833,26 +836,29 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
                         ? this.get(id)?.[sizeProperty] || typicalItemSize
                         : typicalItemSize;
                     if (sticky === 2) {
-                        const w = isVertical ? normalizedItemWidth : size, h = isVertical ? size : normalizedItemHeight, measures = {
-                            x: isVertical ? 0 : actualEndSnippedPosition - w,
-                            y: isVertical ? actualEndSnippedPosition - h : 0,
-                            width: w,
-                            height: h,
-                            delta: 0,
-                        }, config = {
-                            isVertical,
-                            sticky,
-                            snap,
-                            snapped: true,
-                            snappedOut: false,
-                            dynamic: dynamicSize,
-                            isSnappingMethodAdvanced,
-                            zIndex: '1',
-                        };
+                        const isOdd = i % 2 != 0,
+                            w = isVertical ? normalizedItemWidth : size, h = isVertical ? size : normalizedItemHeight, measures = {
+                                x: isVertical ? 0 : actualEndSnippedPosition - w,
+                                y: isVertical ? actualEndSnippedPosition - h : 0,
+                                width: w,
+                                height: h,
+                                delta: 0,
+                            }, config = {
+                                odd: isOdd,
+                                even: !isOdd,
+                                isVertical,
+                                sticky,
+                                snap,
+                                snapped: true,
+                                snappedOut: false,
+                                dynamic: dynamicSize,
+                                isSnappingMethodAdvanced,
+                                zIndex: '1',
+                            };
 
                         const itemData: I = items[i];
 
-                        endStickyItem = { id, measures, data: itemData, config };
+                        endStickyItem = { index: i, id, measures, data: itemData, config };
                         endStickyItemIndex = i;
                         endStickyItemSize = size;
 
@@ -872,7 +878,8 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
                 const id = items[i].id, size = dynamicSize ? this.get(id)?.[sizeProperty] || typicalItemSize : typicalItemSize;
 
                 if (id !== stickyItem?.id && id !== endStickyItem?.id) {
-                    const snapped = snap && (stickyMap[id] === 1 && pos <= scrollSize || stickyMap[id] === 2 && pos >= scrollSize + boundsSize - size),
+                    const isOdd = i % 2 != 0,
+                        snapped = snap && (stickyMap[id] === 1 && pos <= scrollSize || stickyMap[id] === 2 && pos >= scrollSize + boundsSize - size),
                         measures = {
                             x: isVertical ? stickyMap[id] === 1 ? 0 : boundsSize - size : pos,
                             y: isVertical ? pos : stickyMap[id] === 2 ? boundsSize - size : 0,
@@ -880,6 +887,8 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
                             height: isVertical ? size : normalizedItemHeight,
                             delta: 0,
                         }, config = {
+                            odd: isOdd,
+                            even: !isOdd,
                             isVertical,
                             sticky: stickyMap[id],
                             snap,
@@ -896,7 +905,7 @@ export class TrackBox<C extends IVirtualListItemMethods = any>
 
                     const itemData: I = items[i];
 
-                    const item: IRenderVirtualListItem = { id, measures, data: itemData, config };
+                    const item: IRenderVirtualListItem = { index: i, id, measures, data: itemData, config };
                     if (!nextSticky && stickyItemIndex < i && stickyMap[id] === 1 && (pos <= scrollSize + size + stickyItemSize)) {
                         item.measures.x = isVertical ? 0 : snapped ? actualSnippedPosition : pos;
                         item.measures.y = isVertical ? snapped ? actualSnippedPosition : pos : 0;
