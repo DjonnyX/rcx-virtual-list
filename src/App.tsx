@@ -97,7 +97,11 @@ const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): Virt
     return null;
   }
 
-  return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
+  let classes = 'list__container';
+  if (config.even) {
+    classes += ' even';
+  }
+  return <div className={classes} onClick={onItemClick(data)}>{data?.name}</div>
 });
 
 const horizontalItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
@@ -105,7 +109,11 @@ const horizontalItemRendererFactory = (onItemClick: (data: IVirtualListItem) => 
     return null;
   }
 
-  return <div className="list__h-container" onClick={onItemClick(data)}>{data?.name}</div>
+  let classes = 'list__h-container';
+  if (config.even) {
+    classes += ' even';
+  }
+  return <div className={classes} onClick={onItemClick(data)}>{data?.name}</div>
 });
 
 const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
@@ -118,7 +126,11 @@ const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem
       return <div className="list__h-group-container">{data?.name}</div>
     }
     case 'item': {
-      return <div className="list__h-container" onClick={onItemClick(data)}>{data?.name}</div>
+      let classes = 'list__h-container';
+      if (config.even) {
+        classes += ' even';
+      }
+      return <div className={classes} onClick={onItemClick(data)}>{data?.name}</div>
     }
   }
   return null;
@@ -134,7 +146,11 @@ const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any):
       return <div className="list__group-container">{data?.name}</div>
     }
     case 'item': {
-      return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
+      let classes = 'list__container';
+      if (config.even) {
+        classes += ' even';
+      }
+      return <div className={classes} onClick={onItemClick(data)}>{data?.name}</div>
     }
   }
 

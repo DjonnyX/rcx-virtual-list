@@ -454,6 +454,33 @@ List items are encapsulated in shadowDOM, so to override default styles you need
 }
 ```
 
+Selecting even elements:
+
+```tsx
+const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
+  if (!data) {
+    return null;
+  }
+
+  let classes = 'item__content';
+  if (config.even) {
+    classes += ' even';
+  }
+  return <div className={classes}>{data?.name}</div>
+});
+
+<VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
+            items={verticalItems} itemSize={40} bufferSize={50} />
+```
+
+```css
+.item__content {
+  &.even {
+      background-color: #1d1d21;
+  }
+}
+```
+
 ## API
 
 [NgVirtualListComponent](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/ng-virtual-list.component.ts)
