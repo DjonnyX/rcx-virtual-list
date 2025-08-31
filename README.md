@@ -1,9 +1,9 @@
 # RcxVirtualList
 
 Maximum performance for extremely large lists.<br/>
-Flexible, and actively maintained Angular library that excels with high-performance, feature-rich virtualized lists—including grouping, sticky headers, snapping, animations, and both scroll directions. Whether you're rendering millions of items or building interactive list components, it delivers scalability and customization.
+Flexible, and actively maintained React library that excels with high-performance, feature-rich virtualized lists—including grouping, sticky headers, snapping, animations, and both scroll directions. Whether you're rendering millions of items or building interactive list components, it delivers scalability and customization.
 
-Port from [ng-virtual-list](https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list)
+Ported from [ng-virtual-list](https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list)
 
 <img width="1033" height="171" alt="logo" src="https://github.com/user-attachments/assets/32a5f3da-83e2-4801-882b-b198f2d37e7a" />
 
@@ -19,7 +19,7 @@ React version 16.X.X - 19.X.X.
 | --- | --- |
 | **High performance** | Only renders items visible in the viewport (plus a buffer), reducing DOM overhead and improving responsiveness—even with very large datasets |
 | **Grouped lists with sticky headers & snapping** | Supports grouping items, sticky headers, and optional “snap” behavior for clean section scrolling |
-| **React (16–19) compatibility** | Compatible with Angular versions 16 through 19.x, ensuring seamless integration in modern Angular projects |
+| **React (16–19) compatibility** | Compatible with React versions 16 through 19.x, ensuring seamless integration in modern React projects |
 | **Scroll-to capabilities** | Allows programmatic navigation to specific items by ID |
 | **TypeScript support** | Comes with typing for safety and better integration in TypeScript projects |
 
