@@ -20,6 +20,8 @@ import { Id } from './types/id';
 import { ISize } from './types/size';
 import { FIREFOX_SCROLLBAR_OVERLAP_SIZE, IS_FIREFOX } from './utils/browser';
 import { isSnappingMethodAdvenced } from './utils/snapping-method';
+import { VirtualListContext, VirtualListService, VirtualListServiceEvents } from './virtual-list-service';
+import { IRenderVirtualListItem } from './models/render-item.model';
 
 export interface IVirtualListProps {
     className?: string;
@@ -85,6 +87,14 @@ export interface IVirtualListProps {
      * The name of the property by which tracking is performed
      */
     trackBy?: string;
+    /**
+     * Fires when the viewport size is changed.
+     */
+    onViewportChange?: (size: ISize) => void;
+    /**
+     * Fires when an element is clicked.
+     */
+    onItemClick?: (item: IRenderVirtualListItem) => void;
     /**
      * Fires when the list has been scrolled.
      */
@@ -497,6 +507,10 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         if (this._isSnappingMethodAdvanced) {
             this._resizeSnappedComponentHandler();
         }
+
+        if (this._onViewportChange !== undefined) {
+            this._onViewportChange({ ...this.bounds });
+        }
     }
 
     private _onScrollHandler = (e?: Event) => {
@@ -554,6 +568,20 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         }
     }
 
+    private _onViewportChange: ((size: ISize) => void) | undefined;
+
+    private _onItemClick: ((item: IRenderVirtualListItem) => void) | undefined;
+
+    private _onItemClickHandler = (item: IRenderVirtualListItem | undefined) => {
+        if (item) {
+            if (this._onItemClick !== undefined) {
+                this._onItemClick(item);
+            }
+        }
+    }
+
+    private _service = new VirtualListService();
+
     constructor(props: IVirtualListProps) {
         super(props);
 
@@ -561,7 +589,7 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
             direction = DEFAULT_DIRECTION, dynamicSize = DEFAULT_DYNAMIC_SIZE, enabledBufferOptimization = DEFAULT_ENABLED_BUFFER_OPTIMIZATION,
             bufferSize = DEFAULT_BUFFER_SIZE, maxBufferSize = DEFAULT_MAX_BUFFER_SIZE, itemRenderer, items, itemSize = DEFAULT_ITEM_SIZE,
             snap = DEFAULT_SNAP, snappingMethod = DEFAULT_SNAPPING_METHOD, stickyMap = {}, trackBy = TRACK_BY_PROPERTY_NAME, className,
-            onScroll, onScrollEnd,
+            onViewportChange, onItemClick, onScroll, onScrollEnd,
         } = props;
 
         this.direction = direction;
@@ -577,6 +605,8 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         this.stickyMap = stickyMap;
         this.trackBy = trackBy;
         this._className = className;
+        this._onViewportChange = onViewportChange;
+        this._onItemClick = onItemClick;
         this._onScroll = onScroll;
         this._onScrollEnd = onScrollEnd;
 
@@ -693,10 +723,16 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
             this.resetRenderers();
 
             this.observeComponentRenderers();
+
+            this.createServiceListeners();
         }
 
         this._initialized = true;
     });
+
+    private createServiceListeners() {
+        this._service.addEventListener(VirtualListServiceEvents.VIRTUAL_LIST_ITEM_CLICK_EVENT, this._onItemClickHandler);
+    }
 
     componentDidMount(): void {
         this._debouncedInitialize.execute();
@@ -1015,19 +1051,21 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         const { displayComponentsList } = this.state;
         const isVertical = this._isVertical;
 
-        return <div ref={this._$elementRef} className={`rcxvl ${this._className} ${isVertical ? CLASS_LIST_VERTICAL : CLASS_LIST_HORIZONTAL}`}>
-            {
-                this._snap && this._isSnappingMethodAdvanced &&
-                <div ref={this._$snappedRef} className="rcxvl__list-snapper snapped-item">
-                    {<VirtualListItem ref={this._snapedDisplayComponent} regular={true} renderer={this._itemRenderer} />}
+        return <VirtualListContext.Provider value={this._service}>
+            <div ref={this._$elementRef} className={`rcxvl ${this._className} ${isVertical ? CLASS_LIST_VERTICAL : CLASS_LIST_HORIZONTAL}`}>
+                {
+                    this._snap && this._isSnappingMethodAdvanced &&
+                    <div ref={this._$snappedRef} className="rcxvl__list-snapper snapped-item">
+                        {<VirtualListItem ref={this._snapedDisplayComponent} regular={true} renderer={this._itemRenderer} />}
+                    </div>
+                }
+                <div ref={this._$containerRef} className="rcxvl__scroller">
+                    <ul ref={this._$listRef} className="rcxvl__list">
+                        {displayComponentsList.map((ref, index) => <VirtualListItem ref={ref} key={String(index)} renderer={this._itemRenderer} />)}
+                    </ul>
                 </div>
-            }
-            <div ref={this._$containerRef} className="rcxvl__scroller">
-                <ul ref={this._$listRef} className="rcxvl__list">
-                    {displayComponentsList.map((ref, index) => <VirtualListItem ref={ref} key={String(index)} renderer={this._itemRenderer} />)}
-                </ul>
             </div>
-        </div>
+        </VirtualListContext.Provider>
     }
 
     private disposeScrollToRepeatExecutionTimeout() {
@@ -1068,6 +1106,10 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
             containerEl.removeEventListener(SCROLL, this._onScrollHandler);
             containerEl.removeEventListener(SCROLL, this._onContainerScrollHandler);
             containerEl.removeEventListener(SCROLL_END, this._onContainerScrollEndHandler);
+        }
+
+        if (this._service) {
+            this._service.removeEventListener(VirtualListServiceEvents.VIRTUAL_LIST_ITEM_CLICK_EVENT, this._onItemClickHandler);
         }
     }
 }

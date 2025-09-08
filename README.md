@@ -33,7 +33,7 @@ Long-Scrolling Lists / Live Feeds
 When displaying hundreds of thousands of items (think social media feeds, chat logs, or news streams), rcx-virtual-list ensures smooth and responsive rendering without overwhelming the browser.
 
 Horizontal Carousels or Galleries
-Ideal for media-rich UI elements like image galleries, product cards, or horizontal scrollers where traditional ngFor rendering becomes sluggish.
+Ideal for media-rich UI elements like image galleries, product cards, or horizontal scrollers.
 
 Grouped Navigation with Section Headers
 For catalogs, logs, or grouped entries (e.g., by date or category), you can use sticky headers and snapping to guide user navigation effectively. 
@@ -60,12 +60,12 @@ npm i rcx-virtual-list
 
 Code:
 ```tsx
-const horizontalItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const horizontalItemRendererFactory = (): VirtualListItemRenderer => ({ data, config }) => {
   if (!data) {
     return;
   }
 
-  return <div className="list__h-container" onClick={onItemClick(data)}>{data?.name}</div>
+  return <div className="list__h-container">{data?.name}</div>
 };
 
 const MAX_ITEMS = 10000;
@@ -79,12 +79,12 @@ for (let i = 0, l = MAX_ITEMS; i < l; i++) {
 function App() {
   const [horizontalItems] = useState([...HORIZONTAL_ITEMS]);
 
-  const onItemClick = (data: IVirtualListItem) => () => {
-    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  const onItemClick = (item: IRenderVirtualListItem<IItemData>) => {
+    console.info(`Click: (ID: ${item.id}) Item ${item.data.name}`);
   };
 
-  return <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory(onItemClick)} items={horizontalItems}
-    itemSize={54} bufferSize={50} />
+  return <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory()} items={horizontalItems}
+    itemSize={54} bufferSize={50} onItemClick={onItemClick}/>
 }
 ```
 
@@ -94,7 +94,7 @@ function App() {
 
 Code:
 ```tsx
-const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const horizontalGroupItemRendererFactory = (): VirtualListItemRenderer => ({ data, config }) => {
   if (!data) {
     return;
   }
@@ -104,7 +104,7 @@ const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem
       return <div className="list__h-group-container">{data?.name}</div>
     }
     case 'item': {
-      return <div className="list__h-container" onClick={onItemClick(data)}>{data?.name}</div>
+      return <div className="list__h-container">{data?.name}</div>
     }
   }
 };
@@ -128,7 +128,7 @@ function App() {
   const [horizontalGroupItems] = useState([...HORIZONTAL_GROUP_ITEMS]);
   const [horizontalGroupItemsStickyMap] = useState({ ...HORIZONTAL_GROUP_ITEMS_STICKY_MAP });
 
-  return <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalGroupItemRendererFactory(onItemClick)}
+  return <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalGroupItemRendererFactory()}
             items={horizontalGroupItems} itemSize={54} bufferSize={50} snap={true} stickyMap={horizontalGroupItemsStickyMap} />
 }
 ```
@@ -139,12 +139,12 @@ function App() {
 
 Code:
 ```tsx
-const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const itemRendererFactory = (): VirtualListItemRenderer => ({ data, config }) => {
   if (!data) {
     return;
   }
 
-  return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
+  return <div className="list__container">{data?.name}</div>
 };
 
 const MAX_ITEMS = 10000;
@@ -158,12 +158,12 @@ for (let i = 0, l = MAX_ITEMS; i < l; i++) {
 function App() {
   const [verticalItems] = useState([...ITEMS]);
 
-  const onItemClick = (data: IVirtualListItem) => () => {
-    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  const onItemClick = (item: IRenderVirtualListItem<IItemData>) => {
+    console.info(`Click: (ID: ${item.id}) Item ${item.data.name}`);
   };
 
-  return <VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
-            items={verticalItems} itemSize={40} bufferSize={50} />
+  return <VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory()}
+            items={verticalItems} itemSize={40} bufferSize={50} onItemClick={onItemClick} />
 }
 ```
 
@@ -175,7 +175,7 @@ function App() {
 
 Code:
 ```tsx
-const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const groupItemRendererFactory = (): VirtualListItemRenderer => ({ data, config }) => {
   if (!data) {
     return;
   }
@@ -185,7 +185,7 @@ const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any):
       return <div className="list__group-container">{data?.name}</div>
     }
     case 'item': {
-      return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
+      return <div className="list__container">{data?.name}</div>
     }
   }
 };
@@ -207,12 +207,12 @@ function App() {
   const [groupItems] = useState([...GROUP_ITEMS]);
   const [groupItemsStickyMap] = useState({ ...GROUP_ITEMS_STICKY_MAP });
 
-  const onItemClick = (data: IVirtualListItem) => () => {
-    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  const onItemClick = (item: IRenderVirtualListItem<IItemData>) => {
+    console.info(`Click: (ID: ${item.id}) Item ${item.data.name}`);
   };
 
-  return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} bufferSize={50}
-            stickyMap={groupItemsStickyMap} itemSize={40} />
+  return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory()} bufferSize={50}
+            stickyMap={groupItemsStickyMap} itemSize={40} onItemClick={onItemClick} />
 }
 ```
 
@@ -222,7 +222,7 @@ function App() {
 
 Code
 ```tsx
-const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const groupItemRendererFactory = (): VirtualListItemRenderer => ({ data, config }) => {
   if (!data) {
     return;
   }
@@ -232,7 +232,7 @@ const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any):
       return <div className="list__group-container">{data?.name}</div>
     }
     case 'item': {
-      return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
+      return <div className="list__container">{data?.name}</div>
     }
   }
 };
@@ -254,12 +254,12 @@ function App() {
   const [groupItems] = useState([...GROUP_ITEMS]);
   const [groupItemsStickyMap] = useState({ ...GROUP_ITEMS_STICKY_MAP });
 
-  const onItemClick = (data: IVirtualListItem) => () => {
-    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  const onItemClick = (item: IRenderVirtualListItem<IItemData>) => {
+    console.info(`Click: (ID: ${item.id}) Item ${item.data.name}`);
   };
 
-  return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} bufferSize={50}
-            stickyMap={groupItemsStickyMap} itemSize={40} snap={true} />
+  return <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory()} bufferSize={50}
+            stickyMap={groupItemsStickyMap} itemSize={40} snap={true} onItemClick={onItemClick} />
 }
 ```
 
@@ -271,12 +271,12 @@ The example demonstrates the scrollTo method by passing it the element id. It is
 
 Code
 ```tsx
-const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const itemRendererFactory = (): VirtualListItemRenderer => ({ data, config }) => {
   if (!data) {
     return;
   }
 
-  return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
+  return <div className="list__container">{data?.name}</div>
 };
 
 const MAX_ITEMS = 10000;
@@ -298,8 +298,8 @@ function App() {
   });
   const itemId = useRef<Id>(minId);
 
-  const onItemClick = (data: IVirtualListItem) => () => {
-    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  const onItemClick = (item: IRenderVirtualListItem<IItemData>) => {
+    console.info(`Click: (ID: ${item.id}) Item ${item.data.name}`);
   };
 
   return <>
@@ -308,8 +308,8 @@ function App() {
         max={maxId} onChange={onInputScrollToIdChangeHandler} />
       <button className="scroll-to__button" onClick={onButtonScrollToIdClickHandler}>Scroll</button>
     </div>
-    <VirtualList ref={$listContainerRef} className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
-      items={verticalItems} itemSize={40} bufferSize={50} />
+    <VirtualList ref={$listContainerRef} className="list" direction="vertical" itemRenderer={itemRendererFactory()}
+      items={verticalItems} itemSize={40} bufferSize={50} onItemClick={onItemClick} />
   </>
 }
 ```
@@ -322,7 +322,7 @@ Virtual list with height-adjustable elements.
 
 Code
 ```tsx
-const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => ({ data, config }) => {
+const groupItemRendererFactory = (): VirtualListItemRenderer => ({ data, config }) => {
   if (!data) {
     return;
   }
@@ -332,7 +332,7 @@ const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any):
       return <div className="list__group-container">{data?.name}</div>
     }
     case 'item': {
-      return <div className="list__container" onClick={onItemClick(data)}>{data?.name}</div>
+      return <div className="list__container">{data?.name}</div>
     }
   }
 };
@@ -383,13 +383,13 @@ function App() {
   const [groupDynamicItems] = useState([...GROUP_DYNAMIC_ITEMS]);
   const [groupDynamicItemsStickyMap] = useState({ ...GROUP_DYNAMIC_ITEMS_STICKY_MAP });
 
-  const onItemClick = (data: IVirtualListItem) => () => {
-    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  const onItemClick = (item: IRenderVirtualListItem<IItemData>) => {
+    console.info(`Click: (ID: ${item.id}) Item ${item.data.name}`);
   };
 
 function App () {
-  return <VirtualList className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory(onItemClick)}
-            bufferSize={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
+  return <VirtualList className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory()}
+            bufferSize={50} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} onItemClick={onItemClick}/>
 }
 ```
 
@@ -457,7 +457,7 @@ List items are encapsulated in shadowDOM, so to override default styles you need
 Selecting even elements:
 
 ```tsx
-const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
+const itemRendererFactory = (): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
     return null;
   }
@@ -469,7 +469,7 @@ const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): Virt
   return <div className={classes}>{data?.name}</div>
 });
 
-<VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
+<VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory()}
             items={verticalItems} itemSize={40} bufferSize={50} />
 ```
 
@@ -509,8 +509,10 @@ Outputs
 
 | Event | Type | Description |
 |---|---|---|
+| onItemClick | [IRenderVirtualListItem](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/render-item.model.ts) \| undefined | Fires when an element is clicked. |
 | onScroll | ([IScrollEvent](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/scroll-event.model.ts)) => void | Fires when the list has been scrolled. |
 | onScrollEnd | ([IScrollEvent](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/models/scroll-event.model.ts)) => void | Fires when the list has completed scrolling. |
+| onViewportChange | [ISize](https://github.com/DjonnyX/rcx-virtual-list/tree/main/src/lib/src/types/size.ts) | Fires when the viewport size is changed. |
 
 <br/>
 

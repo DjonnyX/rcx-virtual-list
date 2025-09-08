@@ -1,19 +1,24 @@
 import React, { ChangeEvent, useCallback, useRef, useState } from 'react';
-import { Id, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap, VirtualList } from './lib/src';
+import { Id, ISize, IVirtualListCollection, IVirtualListStickyMap, VirtualList } from './lib/src';
 import './lib/index.css';
 import './App.scss';
 import { LOGO } from './const';
 import { VirtualListItemRenderer } from './lib/src/models';
+import { IRenderVirtualListItem } from './lib/src/models/render-item.model';
+
+interface IItemData {
+  name: string;
+}
 
 const MAX_ITEMS = 10000;
 
-const ITEMS: IVirtualListCollection = [];
+const ITEMS: IVirtualListCollection<IItemData> = [];
 for (let i = 0, l = MAX_ITEMS; i < l; i++) {
   const id = i + 1;
   ITEMS.push({ id, name: `Item: ${id}` });
 }
 
-const HORIZONTAL_ITEMS: IVirtualListCollection = [];
+const HORIZONTAL_ITEMS: IVirtualListCollection<IItemData> = [];
 for (let i = 0, l = MAX_ITEMS; i < l; i++) {
   const id = i + 1;
   HORIZONTAL_ITEMS.push({ id, name: `${id}` });
@@ -25,7 +30,7 @@ const getGroupName = () => {
   return GROUP_NAMES[Math.floor(Math.random() * GROUP_NAMES.length)];
 };
 
-const HORIZONTAL_GROUP_ITEMS: IVirtualListCollection = [],
+const HORIZONTAL_GROUP_ITEMS: IVirtualListCollection<IItemData> = [],
   HORIZONTAL_GROUP_ITEMS_STICKY_MAP: IVirtualListStickyMap = {};
 
 for (let i = 0, l = MAX_ITEMS; i < l; i++) {
@@ -34,7 +39,7 @@ for (let i = 0, l = MAX_ITEMS; i < l; i++) {
   HORIZONTAL_GROUP_ITEMS_STICKY_MAP[id] = type === 'group-header' ? 1 : 0;
 }
 
-const GROUP_ITEMS: IVirtualListCollection = [],
+const GROUP_ITEMS: IVirtualListCollection<IItemData> = [],
   GROUP_ITEMS_STICKY_MAP: IVirtualListStickyMap = {};
 
 let groupIndex = 0;
@@ -75,9 +80,9 @@ const generateText = () => {
   return `${result.join(' ')}.`;
 };
 
-const GROUP_DYNAMIC_ITEMS: IVirtualListCollection = [],
+const GROUP_DYNAMIC_ITEMS: IVirtualListCollection<IItemData> = [],
   GROUP_DYNAMIC_ITEMS_STICKY_MAP: IVirtualListStickyMap = {},
-  GROUP_DYNAMIC_ITEMS_WITH_SNAP: IVirtualListCollection = [],
+  GROUP_DYNAMIC_ITEMS_WITH_SNAP: IVirtualListCollection<IItemData> = [],
   GROUP_DYNAMIC_ITEMS_STICKY_MAP_WITH_SNAP: IVirtualListStickyMap = {};
 
 let groupDynamicIndex = 0;
@@ -92,7 +97,7 @@ for (let i = 0, l = 100000; i < l; i++) {
   GROUP_DYNAMIC_ITEMS_STICKY_MAP_WITH_SNAP[id] = type === 'group-header' ? 1 : 0;
 }
 
-const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
+const itemRendererFactory = (): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
     return null;
   }
@@ -101,10 +106,10 @@ const itemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): Virt
   if (config.even) {
     classes += ' even';
   }
-  return <div className={classes} onClick={onItemClick(data)}>{data?.name}</div>
+  return <div className={classes}>{data?.name}</div>
 });
 
-const horizontalItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
+const horizontalItemRendererFactory = (): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
     return null;
   }
@@ -113,10 +118,10 @@ const horizontalItemRendererFactory = (onItemClick: (data: IVirtualListItem) => 
   if (config.even) {
     classes += ' even';
   }
-  return <div className={classes} onClick={onItemClick(data)}>{data?.name}</div>
+  return <div className={classes}>{data?.name}</div>
 });
 
-const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
+const horizontalGroupItemRendererFactory = (): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
     return null;
   }
@@ -130,13 +135,13 @@ const horizontalGroupItemRendererFactory = (onItemClick: (data: IVirtualListItem
       if (config.even) {
         classes += ' even';
       }
-      return <div className={classes} onClick={onItemClick(data)}>{data?.name}</div>
+      return <div className={classes}>{data?.name}</div>
     }
   }
   return null;
 });
 
-const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any): VirtualListItemRenderer => (({ data, config }) => {
+const groupItemRendererFactory = (): VirtualListItemRenderer => (({ data, config }) => {
   if (!data) {
     return null;
   }
@@ -150,7 +155,7 @@ const groupItemRendererFactory = (onItemClick: (data: IVirtualListItem) => any):
       if (config.even) {
         classes += ' even';
       }
-      return <div className={classes} onClick={onItemClick(data)}>{data?.name}</div>
+      return <div className={classes}>{data?.name}</div>
     }
   }
 
@@ -216,8 +221,12 @@ function App() {
     }
   }, []);
 
-  const onItemClick = (data: IVirtualListItem) => () => {
-    console.info(`Click: Item ${data['name']} (ID: ${data.id})`);
+  const onItemClick = (item: IRenderVirtualListItem<IItemData>) => {
+    console.info(`Click: (ID: ${item.id}) Item ${item.data.name}`);
+  };
+
+  const onViewportChangeHandler = (size: ISize) => {
+    console.info(`Viewport changed: ${JSON.stringify(size)}`);
   };
 
   return (
@@ -236,24 +245,24 @@ function App() {
       <div className="vl-section">
         <div className="vl-section__container">
           <h2>Horizontal list</h2>
-          <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory(onItemClick)} items={horizontalItems}
-            itemSize={54} bufferSize={50} />
+          <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalItemRendererFactory()} items={horizontalItems}
+            itemSize={54} bufferSize={50} onItemClick={onItemClick} />
         </div>
       </div>
 
       <div className="vl-section">
         <div className="vl-section__container">
           <h2>Horizontal group list</h2>
-          <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalGroupItemRendererFactory(onItemClick)}
-            items={horizontalGroupItems} itemSize={54} bufferSize={50} snap={true} stickyMap={horizontalGroupItemsStickyMap} />
+          <VirtualList className="list" direction="hotizontal" itemRenderer={horizontalGroupItemRendererFactory()}
+            items={horizontalGroupItems} itemSize={54} bufferSize={50} snap={true} stickyMap={horizontalGroupItemsStickyMap} onItemClick={onItemClick} />
         </div>
       </div>
 
       <div className="vl-section">
         <div className="vl-section__container">
           <h2>Vertical virtual list</h2>
-          <VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
-            items={verticalItems} itemSize={40} bufferSize={50} />
+          <VirtualList className="list" direction="vertical" itemRenderer={itemRendererFactory()}
+            items={verticalItems} itemSize={40} bufferSize={50} onItemClick={onItemClick} />
         </div>
       </div>
 
@@ -265,24 +274,24 @@ function App() {
               max={maxId} onChange={onInputScrollToIdChangeHandler} />
             <button className="scroll-to__button" onClick={onButtonScrollToIdClickHandler}>Scroll</button>
           </div>
-          <VirtualList ref={$listContainerRef} className="list" direction="vertical" itemRenderer={itemRendererFactory(onItemClick)}
-            items={verticalItems1} itemSize={40} bufferSize={50} />
+          <VirtualList ref={$listContainerRef} className="list" direction="vertical" itemRenderer={itemRendererFactory()}
+            items={verticalItems1} itemSize={40} bufferSize={50} onItemClick={onItemClick} />
         </div>
       </div>
 
       <div className="vl-section">
         <div className="vl-section__container">
           <h2>Virtual group list</h2>
-          <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory(onItemClick)} bufferSize={50}
-            stickyMap={groupItemsStickyMap} itemSize={40} />
+          <VirtualList className="list" items={groupItems} itemRenderer={groupItemRendererFactory()} bufferSize={50}
+            stickyMap={groupItemsStickyMap} itemSize={40} onItemClick={onItemClick} />
         </div>
       </div>
 
       <div className="vl-section">
         <div className="vl-section__container">
           <h2>Virtual group list (with snapping)</h2>
-          <VirtualList className="list" items={groupItems1} itemRenderer={groupItemRendererFactory(onItemClick)} bufferSize={20} maxBufferSize={200}
-            stickyMap={groupItemsStickyMap1} itemSize={40} snap={true} />
+          <VirtualList className="list" items={groupItems1} itemRenderer={groupItemRendererFactory()} bufferSize={20} maxBufferSize={200}
+            stickyMap={groupItemsStickyMap1} itemSize={40} snap={true} onItemClick={onItemClick} />
         </div>
       </div>
 
@@ -294,8 +303,9 @@ function App() {
               max={maxDlId} onChange={onInputScrollToDlIdChangeHandler} />
             <button className="scroll-to__button" onClick={onButtonScrollDLToIdClickHandler}>Scroll</button>
           </div>
-          <VirtualList ref={$listContainerRef1} className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory(onItemClick)}
-            bufferSize={20} maxBufferSize={200} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} />
+          <VirtualList ref={$listContainerRef1} className="list" items={groupDynamicItems} itemRenderer={groupItemRendererFactory()}
+            bufferSize={20} maxBufferSize={200} stickyMap={groupDynamicItemsStickyMap} dynamicSize={true} snap={true} onItemClick={onItemClick}
+            onViewportChange={onViewportChangeHandler} />
         </div>
       </div >
 
