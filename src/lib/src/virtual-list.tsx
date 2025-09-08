@@ -1,14 +1,14 @@
 import React, {
-    createRef, ReactNode, RefObject,
+    createRef, RefObject,
 } from 'react';
 import {
     IScrollEvent, IVirtualListCollection, IVirtualListItem, IVirtualListStickyMap, IVirtualListItemMethods,
     VirtualListItemRenderer,
 } from './models';
 import {
-    BEHAVIOR_AUTO, BEHAVIOR_INSTANT, CLASS_LIST_HORIZONTAL, CLASS_LIST_VERTICAL, DEFAULT_DIRECTION, DEFAULT_DYNAMIC_SIZE,
-    DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_ITEMS_OFFSET, DEFAULT_LIST_SIZE, DEFAULT_SNAP,
-    DEFAULT_SNAPPING_METHOD, HEIGHT_PROP_NAME, LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME,
+    BEHAVIOR_AUTO, BEHAVIOR_INSTANT, CLASS_LIST_HORIZONTAL, CLASS_LIST_VERTICAL, DEFAULT_BUFFER_SIZE, DEFAULT_DIRECTION, DEFAULT_DYNAMIC_SIZE,
+    DEFAULT_ENABLED_BUFFER_OPTIMIZATION, DEFAULT_ITEM_SIZE, DEFAULT_LIST_SIZE, DEFAULT_MAX_BUFFER_SIZE, DEFAULT_SNAP, DEFAULT_SNAPPING_METHOD,
+    HEIGHT_PROP_NAME, LEFT_PROP_NAME, MAX_SCROLL_TO_ITERATIONS, PX, SCROLL, SCROLL_END, TOP_PROP_NAME,
     TRACK_BY_PROPERTY_NAME, WIDTH_PROP_NAME,
 } from './const';
 import { debounce, isDirection, ScrollEvent, TrackBox } from './utils';
@@ -20,6 +20,8 @@ import { Id } from './types/id';
 import { ISize } from './types/size';
 import { FIREFOX_SCROLLBAR_OVERLAP_SIZE, IS_FIREFOX } from './utils/browser';
 import { isSnappingMethodAdvenced } from './utils/snapping-method';
+import { VirtualListContext, VirtualListService, VirtualListServiceEvents } from './virtual-list-service';
+import { IRenderVirtualListItem } from './models/render-item.model';
 
 export interface IVirtualListProps {
     className?: string;
@@ -48,9 +50,19 @@ export interface IVirtualListProps {
      */
     items: IVirtualListCollection | undefined;
     /**
-     * Number of elements outside the scope of visibility. Default value is 2.
+     * @deprecated "itemOffset" parameter is deprecated. Use "bufferSize" and "maxBufferSize".
      */
     itemsOffset?: number;
+    /**
+     * Number of elements outside the scope of visibility. Default value is 2.
+     */
+    bufferSize?: number;
+    /**
+     * Maximum number of elements outside the scope of visibility. Default value is 100.
+     * If maxBufferSize is set to be greater than bufferSize, then adaptive buffer mode is enabled.
+     * The greater the scroll size, the more elements are allocated for rendering.
+     */
+    maxBufferSize?: number;
     /**
      * If direction = 'vertical', then the height of a typical element. If direction = 'horizontal', then the width of a typical element.
      * Ignored if the dynamicSize property is true.
@@ -75,6 +87,14 @@ export interface IVirtualListProps {
      * The name of the property by which tracking is performed
      */
     trackBy?: string;
+    /**
+     * Fires when the viewport size is changed.
+     */
+    onViewportChange?: (size: ISize) => void;
+    /**
+     * Fires when an element is clicked.
+     */
+    onItemClick?: (item: IRenderVirtualListItem) => void;
     /**
      * Fires when the list has been scrolled.
      */
@@ -265,18 +285,37 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         return this._direction;
     }
 
-    private _itemsOffset: number = DEFAULT_ITEMS_OFFSET;
+    private _bufferSize: number = DEFAULT_BUFFER_SIZE;
 
     /**
      * Number of elements outside the scope of visibility. Default value is 2.
      */
-    set itemsOffset(v: number) {
-        if (this._itemsOffset !== v) {
-            this._itemsOffset = v;
+    set bufferSize(v: number) {
+        if (this._bufferSize !== v) {
+            this._bufferSize = v;
         }
     }
-    get itemsOffset() {
-        return this._itemsOffset;
+    get bufferSize() {
+        return this._bufferSize;
+    }
+
+    private _maxBufferSize: number = DEFAULT_MAX_BUFFER_SIZE;
+
+    /**
+     * Number of elements outside the scope of visibility. Default value is 2.
+     */
+    set maxBufferSize(v: number) {
+        const bufferSize = this.bufferSize;
+        if (v === undefined || v <= bufferSize) {
+            this._maxBufferSize = bufferSize;
+            return;
+        }
+        if (this._maxBufferSize !== v) {
+            this._maxBufferSize = v;
+        }
+    }
+    get maxBufferSize() {
+        return this._maxBufferSize;
     }
 
     private _snappingMethod: SnappingMethod = DEFAULT_SNAPPING_METHOD;
@@ -322,8 +361,6 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
     private _onScroll: ((e: IScrollEvent) => void) | undefined;
 
     private _onScrollEnd: ((e: IScrollEvent) => void) | undefined;
-
-    private _isStopJumpingScroll = false;
 
     private _displayComponents: Array<React.RefObject<VirtualListItem | null>> = [];
 
@@ -470,6 +507,10 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         if (this._isSnappingMethodAdvanced) {
             this._resizeSnappedComponentHandler();
         }
+
+        if (this._onViewportChange !== undefined) {
+            this._onViewportChange({ ...this.bounds });
+        }
     }
 
     private _onScrollHandler = (e?: Event) => {
@@ -527,20 +568,35 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         }
     }
 
+    private _onViewportChange: ((size: ISize) => void) | undefined;
+
+    private _onItemClick: ((item: IRenderVirtualListItem) => void) | undefined;
+
+    private _onItemClickHandler = (item: IRenderVirtualListItem | undefined) => {
+        if (item) {
+            if (this._onItemClick !== undefined) {
+                this._onItemClick(item);
+            }
+        }
+    }
+
+    private _service = new VirtualListService();
+
     constructor(props: IVirtualListProps) {
         super(props);
 
         const {
             direction = DEFAULT_DIRECTION, dynamicSize = DEFAULT_DYNAMIC_SIZE, enabledBufferOptimization = DEFAULT_ENABLED_BUFFER_OPTIMIZATION,
-            itemsOffset = DEFAULT_ITEMS_OFFSET, itemRenderer, items, itemSize = DEFAULT_ITEM_SIZE, snap = DEFAULT_SNAP,
-            snappingMethod = DEFAULT_SNAPPING_METHOD, stickyMap = {}, trackBy = TRACK_BY_PROPERTY_NAME, className,
-            onScroll, onScrollEnd,
+            bufferSize = DEFAULT_BUFFER_SIZE, maxBufferSize = DEFAULT_MAX_BUFFER_SIZE, itemRenderer, items, itemSize = DEFAULT_ITEM_SIZE,
+            snap = DEFAULT_SNAP, snappingMethod = DEFAULT_SNAPPING_METHOD, stickyMap = {}, trackBy = TRACK_BY_PROPERTY_NAME, className,
+            onViewportChange, onItemClick, onScroll, onScrollEnd,
         } = props;
 
         this.direction = direction;
         this.dynamicSize = dynamicSize;
         this.enabledBufferOptimization = enabledBufferOptimization;
-        this.itemsOffset = itemsOffset;
+        this.bufferSize = bufferSize;
+        this.maxBufferSize = maxBufferSize;
         this.items = items;
         this.itemRenderer = itemRenderer;
         this.itemSize = itemSize;
@@ -549,6 +605,8 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         this.stickyMap = stickyMap;
         this.trackBy = trackBy;
         this._className = className;
+        this._onViewportChange = onViewportChange;
+        this._onItemClick = onItemClick;
         this._onScroll = onScroll;
         this._onScrollEnd = onScrollEnd;
 
@@ -603,8 +661,13 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
             needToUpdate = true;
         }
 
-        if (nextProps.itemsOffset !== this._itemsOffset) {
-            this.itemsOffset = nextProps.itemsOffset ?? DEFAULT_ITEMS_OFFSET;
+        if (nextProps.bufferSize !== this._bufferSize) {
+            this.bufferSize = nextProps.bufferSize ?? DEFAULT_BUFFER_SIZE;
+            needToUpdate = true;
+        }
+
+        if (nextProps.maxBufferSize !== this._maxBufferSize) {
+            this.maxBufferSize = nextProps.maxBufferSize ?? DEFAULT_MAX_BUFFER_SIZE;
             needToUpdate = true;
         }
 
@@ -660,10 +723,16 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
             this.resetRenderers();
 
             this.observeComponentRenderers();
+
+            this.createServiceListeners();
         }
 
         this._initialized = true;
     });
+
+    private createServiceListeners() {
+        this._service.addEventListener(VirtualListServiceEvents.VIRTUAL_LIST_ITEM_CLICK_EVENT, this._onItemClickHandler);
+    }
 
     componentDidMount(): void {
         this._debouncedInitialize.execute();
@@ -697,14 +766,15 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         const items = this._items, bounds = this._bounds, initialized = this._initialized;
         if (initialized && bounds && items) {
             const { width, height } = bounds, isVertical = this._isVertical, stickyMap = this._stickyMap,
-                itemSize = this._itemSize, dynamicSize = this._dynamicSize, snap = this._snap, itemsOffset = this._itemsOffset,
-                enabledBufferOptimization = this._enabledBufferOptimization, scrollSize = (this._isVertical
+                itemSize = this._itemSize, dynamicSize = this._dynamicSize, snap = this._snap, bufferSize = this._bufferSize,
+                maxBufferSize = this._maxBufferSize, enabledBufferOptimization = this._enabledBufferOptimization,
+                scrollSize = (this._isVertical
                     ? this._$containerRef?.current?.scrollTop ?? 0
                     : this._$containerRef?.current?.scrollLeft) ?? 0;
             let actualScrollSize = scrollSize;
             const opts: IUpdateCollectionOptions<IVirtualListItem, IVirtualListCollection> = {
                 bounds: { width, height }, dynamicSize, isVertical, itemSize,
-                itemsOffset, scrollSize: actualScrollSize, snap, enabledBufferOptimization,
+                bufferSize, maxBufferSize, scrollSize: actualScrollSize, snap, enabledBufferOptimization,
             };
             const { displayItems, totalSize } = this._trackBox.updateCollection(items, stickyMap, opts);
 
@@ -718,21 +788,19 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
                 this._resizeSnappedComponentHandler();
             }
 
-            if (!this._isStopJumpingScroll) {
-                const container = this._$containerRef;
-                if (container) {
-                    const delta = this._trackBox.delta;
-                    actualScrollSize = scrollSize + delta;
-                    this._trackBox.clearDelta();
-                    if (this._scrollSize !== actualScrollSize) {
-                        const params: ScrollToOptions = {
-                            [this._isVertical ? TOP_PROP_NAME : LEFT_PROP_NAME]: actualScrollSize,
-                            behavior: BEHAVIOR_INSTANT as ScrollBehavior
-                        };
+            const container = this._$containerRef;
+            if (container) {
+                const delta = this._trackBox.delta;
+                actualScrollSize = scrollSize + delta;
+                this._trackBox.clearDelta();
+                if (this._scrollSize !== actualScrollSize) {
+                    const params: ScrollToOptions = {
+                        [this._isVertical ? TOP_PROP_NAME : LEFT_PROP_NAME]: actualScrollSize,
+                        behavior: BEHAVIOR_INSTANT as ScrollBehavior
+                    };
 
-                        container.current?.scrollTo(params);
-                        this.scrollSize = actualScrollSize;
-                    }
+                    container.current?.scrollTo(params);
+                    this.scrollSize = actualScrollSize;
                 }
             }
         }
@@ -773,8 +841,8 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
 
     protected scrollToExecutor(id: Id, behavior: ScrollBehavior, iteration: number = 0, isLastIteration = false) {
         const items = this._items, bounds = this._bounds, dynamicSize = this._dynamicSize, isVertical = this._isVertical,
-            itemSize = this._itemSize, itemsOffset = this._itemsOffset, snap = this._snap, trackBox = this._trackBox,
-            enabledBufferOptimization = this._enabledBufferOptimization, stickyMap = this._stickyMap;
+            itemSize = this._itemSize, bufferSize = this._bufferSize, maxBufferSize = this._maxBufferSize, snap = this._snap,
+            trackBox = this._trackBox, enabledBufferOptimization = this._enabledBufferOptimization, stickyMap = this._stickyMap;
         if (!bounds || !items || !items.length) {
             return;
         }
@@ -782,9 +850,9 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         const container = this._$containerRef;
         if (container) {
             this.disposeScrollToRepeatExecutionTimeout();
-            container.current?.removeEventListener(SCROLL_END, this._onScrollEndHandler);
 
             if (dynamicSize) {
+                container.current?.removeEventListener(SCROLL_END, this._onScrollEndHandler);
                 if (container && container.current) {
                     container.current.removeEventListener(SCROLL, this._onScrollHandler);
                 }
@@ -792,7 +860,9 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
                 const { width, height } = bounds, delta = trackBox.delta,
                     opts: IGetItemPositionOptions<IVirtualListItem, IVirtualListCollection> = {
                         bounds: { width, height }, collection: items, dynamicSize, isVertical, itemSize,
-                        itemsOffset, scrollSize: (isVertical ? container.current?.scrollTop ?? 0 : container.current?.scrollLeft ?? 0) + delta,
+                        bufferSize, maxBufferSize, scrollSize: (isVertical ? container.current?.scrollTop
+                            ?? 0
+                            : container.current?.scrollLeft ?? 0) + delta,
                         snap, fromItemId: id, enabledBufferOptimization,
                     },
                     scrollSize = trackBox.getItemPosition(id, stickyMap, opts),
@@ -847,14 +917,16 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
                 this.scrollSize = scrollSize;
             } else {
                 const _scrollSize = (isVertical ? container.current?.scrollTop ?? 0 : container.current?.scrollLeft ?? 0),
-                    index = items.findIndex(item => item.id === id), scrollSize = index * itemSize;
+                    index = items.findIndex(item => item.id === id);
 
-                if (_scrollSize !== scrollSize) {
-                    this._isStopJumpingScroll = true;
-                    container.current?.addEventListener('scroll', this._onScrollEndHandler);
+                if (index > -1) {
+                    const scrollSize = index * itemSize;
+
+                    if (_scrollSize !== scrollSize) {
+                        const params: ScrollToOptions = { [isVertical ? TOP_PROP_NAME : LEFT_PROP_NAME]: scrollSize, behavior };
+                        container.current?.scrollTo(params);
+                    }
                 }
-                const params: ScrollToOptions = { [isVertical ? TOP_PROP_NAME : LEFT_PROP_NAME]: scrollSize, behavior };
-                container.current?.scrollTo(params);
             }
         }
     }
@@ -979,19 +1051,21 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
         const { displayComponentsList } = this.state;
         const isVertical = this._isVertical;
 
-        return <div ref={this._$elementRef} className={`rcxvl ${this._className} ${isVertical ? CLASS_LIST_VERTICAL : CLASS_LIST_HORIZONTAL}`}>
-            {
-                this._snap && this._isSnappingMethodAdvanced &&
-                <div ref={this._$snappedRef} className="rcxvl__list-snapper snapped-item">
-                    {<VirtualListItem ref={this._snapedDisplayComponent} regular={true} renderer={this._itemRenderer} />}
+        return <VirtualListContext.Provider value={this._service}>
+            <div ref={this._$elementRef} className={`rcxvl ${this._className} ${isVertical ? CLASS_LIST_VERTICAL : CLASS_LIST_HORIZONTAL}`}>
+                {
+                    this._snap && this._isSnappingMethodAdvanced &&
+                    <div ref={this._$snappedRef} className="rcxvl__list-snapper snapped-item">
+                        {<VirtualListItem ref={this._snapedDisplayComponent} regular={true} renderer={this._itemRenderer} />}
+                    </div>
+                }
+                <div ref={this._$containerRef} className="rcxvl__scroller">
+                    <ul ref={this._$listRef} className="rcxvl__list">
+                        {displayComponentsList.map((ref, index) => <VirtualListItem ref={ref} key={String(index)} renderer={this._itemRenderer} />)}
+                    </ul>
                 </div>
-            }
-            <div ref={this._$containerRef} className="rcxvl__scroller">
-                <ul ref={this._$listRef} className="rcxvl__list">
-                    {displayComponentsList.map((ref, index) => <VirtualListItem ref={ref} key={String(index)} renderer={this._itemRenderer} />)}
-                </ul>
             </div>
-        </div>
+        </VirtualListContext.Provider>
     }
 
     private disposeScrollToRepeatExecutionTimeout() {
@@ -1032,6 +1106,10 @@ export class VirtualList extends React.Component<IVirtualListProps, IVirtualList
             containerEl.removeEventListener(SCROLL, this._onScrollHandler);
             containerEl.removeEventListener(SCROLL, this._onContainerScrollHandler);
             containerEl.removeEventListener(SCROLL_END, this._onContainerScrollEndHandler);
+        }
+
+        if (this._service) {
+            this._service.removeEventListener(VirtualListServiceEvents.VIRTUAL_LIST_ITEM_CLICK_EVENT, this._onItemClickHandler);
         }
     }
 }

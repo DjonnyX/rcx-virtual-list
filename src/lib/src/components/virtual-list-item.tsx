@@ -1,11 +1,13 @@
-import React, { createRef, ReactNode } from 'react';
+import React, { createRef, MouseEvent } from 'react';
 import { IVirtualListItemMethods, VirtualListItemRenderer } from '../models';
 import { IRenderVirtualListItem } from '../models/render-item.model';
 import { ISize } from '../types';
 import {
+    CLASS_DEFAULT_ITEM, CLASS_ITEM, CLASS_ITEM_EVEN, CLASS_ITEM_ODD, CLASS_ITEM_SNAPPED, CLASS_ITEM_SNAPPED_OUT,
     DEFAULT_ZINDEX, DISPLAY_BLOCK, DISPLAY_NONE, HIDDEN_ZINDEX, POSITION_ABSOLUTE, POSITION_STICKY, PX, SIZE_100_PERSENT, SIZE_AUTO,
     TRANSLATE_3D, VISIBILITY_HIDDEN, VISIBILITY_VISIBLE, ZEROS_TRANSLATE_3D,
 } from '../const';
+import { VirtualListContext } from '../virtual-list-service';
 
 export interface IVirtualListItemProps {
     regular?: boolean;
@@ -28,6 +30,16 @@ const DEFAULT_ITEM_RENDERER_FACTORY = () => <></>;
  * @email djonnyx@gmail.com
  */
 export class VirtualListItem extends React.Component<IVirtualListItemProps, IVirtualListItemState> implements IVirtualListItemMethods {
+    static contextType = VirtualListContext as any;
+
+    context!: React.ContextType<typeof VirtualListContext>;
+
+    private _onClickHandler = (e?: MouseEvent<HTMLLIElement>): void => {
+        if (this.context) {
+            this.context.itemClick(this._data);
+        }
+    }
+
     private _$elementRef = createRef<HTMLDivElement>();
 
     private _$listItemRef = createRef<HTMLLIElement>();
@@ -100,7 +112,6 @@ export class VirtualListItem extends React.Component<IVirtualListItemProps, IVir
 
         this._id = VirtualListItem.__nextId = VirtualListItem.__nextId === Number.MAX_SAFE_INTEGER
             ? 0 : VirtualListItem.__nextId + 1;
-
 
         this._regular = props.regular ?? false;
         this._renderer = props.renderer ?? DEFAULT_ITEM_RENDERER_FACTORY;
@@ -215,22 +226,28 @@ export class VirtualListItem extends React.Component<IVirtualListItemProps, IVir
 
 
     private classNames(data: IRenderVirtualListItem, ...classes: Array<string>) {
-        const result = ['rcxvl__item-container', ...(classes ?? [])];
+        const result = [CLASS_DEFAULT_ITEM, ...(classes ?? [])];
         if (data.config.snapped) {
-            result.push('snapped');
+            result.push(CLASS_ITEM_SNAPPED);
         }
         if (data.config.snappedOut) {
-            result.push('snapped-out');
+            result.push(CLASS_ITEM_SNAPPED_OUT);
+        }
+        if (data.config.odd) {
+            result.push(CLASS_ITEM_ODD);
+        }
+        if (data.config.even) {
+            result.push(CLASS_ITEM_EVEN);
         }
         return result.join(' ');
     }
 
     render(): React.ReactNode {
         const renderer = this._renderer, itemRenderer = { renderer }, data = this._data;
-        return <div ref={this._$elementRef} className='rcxvl__item'>
+        return <div ref={this._$elementRef} className={CLASS_ITEM}>
             {
                 this._data &&
-                <li ref={this._$listItemRef} className={this.classNames(this._data)}>
+                <li ref={this._$listItemRef} className={this.classNames(this._data)} onClick={this._onClickHandler}>
                     {(renderer !== undefined || renderer !== null) && <itemRenderer.renderer data={data?.data!} config={data?.config!} />}
                 </li>
             }

@@ -6,6 +6,7 @@ import { IVirtualListCollection } from './collection.model';
 import { IVirtualListItemMethods } from './virtual-list-item-ref-methods.model';
 import { IVirtualListMethods } from './virtual-list-methods.model';
 import { VirtualListItemRenderer } from './virtual-list-item-renderer.model';
+import { IRenderVirtualListItem } from './render-item.model';
 
 export type {
     ScrollDirection,
@@ -16,4 +17,5 @@ export type {
     IVirtualListItemMethods,
     IVirtualListMethods,
     VirtualListItemRenderer,
+    IRenderVirtualListItem,
 };

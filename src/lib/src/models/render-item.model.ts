@@ -9,7 +9,11 @@ import { IRenderVirtualListItemConfig } from "./render-item-config.model";
  * @author Evgenii Grebennikov
  * @email djonnyx@gmail.com
  */
-export interface IRenderVirtualListItem {
+export interface IRenderVirtualListItem<E = any> {
+    /**
+     * Element index.
+     */
+    index: number;
     /**
      * Unique identifier of the element.
      */
@@ -26,7 +30,7 @@ export interface IRenderVirtualListItem {
     /**
      * Element data.
      */
-    data: IVirtualListItem;
+    data: IVirtualListItem<E>;
     /**
      * Object with configuration parameters for IRenderVirtualListItem.
      */

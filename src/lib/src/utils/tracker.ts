@@ -1,5 +1,6 @@
 import { IVirtualListItemMethods, ScrollDirection } from "../models";
 import { Id, ISize } from "../types";
+import { CMap } from "./cacheMap";
 
 type TrackingPropertyId = string | number;
 
@@ -22,7 +23,7 @@ export class Tracker<C extends IVirtualListItemMethods = any> {
     /**
      * display objects dictionary of indexes by id
      */
-    private _displayObjectIndexMapById: { [id: number]: number } = {};
+    protected _displayObjectIndexMapById: { [id: number]: number } = {};
 
     set displayObjectIndexMapById(v: { [id: number]: number }) {
         if (this._displayObjectIndexMapById === v) {
@@ -39,13 +40,13 @@ export class Tracker<C extends IVirtualListItemMethods = any> {
     /**
      * Dictionary displayItems propertyNameId by items propertyNameId
      */
-    private _trackMap: { [id: TrackingPropertyId]: number } | null = {};
+    protected _trackMap = new CMap<TrackingPropertyId, number>();
 
     get trackMap() {
         return this._trackMap;
     }
 
-    private _trackingPropertyName!: string;
+    protected _trackingPropertyName!: string;
 
     set trackingPropertyName(v: string) {
         this._trackingPropertyName = v;
@@ -64,15 +65,16 @@ export class Tracker<C extends IVirtualListItemMethods = any> {
             return;
         }
 
-        const idPropName = this._trackingPropertyName, untrackedItems = [...components], isDown = direction === 0 || direction === 1;
+        const idPropName = this._trackingPropertyName, untrackedItems = [...components], newTrackItems: Array<React.RefObject<C>> = [],
+            isDown = direction === 0 || direction === 1;
         let isRegularSnapped = false;
 
         for (let i = isDown ? 0 : items.length - 1, l = isDown ? items.length : 0; isDown ? i < l : i >= l; isDown ? i++ : i--) {
             const item = items[i], itemTrackingProperty = item[idPropName];
 
             if (this._trackMap) {
-                if (this._trackMap.hasOwnProperty(itemTrackingProperty)) {
-                    const diId = this._trackMap[itemTrackingProperty],
+                if (this._trackMap.has(itemTrackingProperty)) {
+                    const diId = this._trackMap.get(itemTrackingProperty),
                         compIndex = this._displayObjectIndexMapById[diId], comp = components[compIndex];
 
                     const compId = comp?.current?.id;
@@ -103,10 +105,17 @@ export class Tracker<C extends IVirtualListItemMethods = any> {
                             continue;
                         }
                     }
-                    delete this._trackMap[itemTrackingProperty];
+                    this._trackMap.delete(itemTrackingProperty);
                 }
             }
 
+            if (untrackedItems.length > 0) {
+                newTrackItems.push(item);
+            }
+        }
+
+        for (let i = 0, l = newTrackItems.length; i < l; i++) {
+            const item = newTrackItems[i], itemTrackingProperty = (item as any)[idPropName];
             if (untrackedItems.length > 0) {
                 const comp = untrackedItems.shift(), item = items[i];
                 if (comp?.current) {
@@ -129,7 +138,7 @@ export class Tracker<C extends IVirtualListItemMethods = any> {
                     }
 
                     if (this._trackMap) {
-                        this._trackMap[itemTrackingProperty] = comp.current.id;
+                        this._trackMap.set(itemTrackingProperty, comp.current.id);
                     }
                 }
             }
@@ -160,11 +169,13 @@ export class Tracker<C extends IVirtualListItemMethods = any> {
         const propertyIdName = this._trackingPropertyName;
 
         if (this._trackMap && (component as any)[propertyIdName] !== undefined) {
-            delete this._trackMap[propertyIdName];
+            this._trackMap.delete(propertyIdName);
         }
     }
 
     dispose() {
-        this._trackMap = null;
+        if (this._trackMap) {
+            this._trackMap.clear();
+        }
     }
 }
