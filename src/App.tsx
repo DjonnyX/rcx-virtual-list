@@ -238,7 +238,7 @@ function App() {
         <p className="l m">&#64;author: djonnyx&#64;gmail.com</p>
         <p className="l m">Ported from <a href='https://github.com/DjonnyX/ng-virtual-list/tree/main/projects/ng-virtual-list'>ng-virtual-list</a></p>
         <img className="logo" src={LOGO} />
-        <div className="version"><span>v 1.2.1</span></div>
+        <div className="version"><span>v 1.3.0</span></div>
         <div className="version"><span>React v 16.X.X - v 19.X.X</span></div>
       </div>
 
